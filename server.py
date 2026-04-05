@@ -40,7 +40,7 @@ from lib.analyzer import (
     score_tool, score_and_rank,
     generate_llm_decomposition_prompt, generate_llm_tool_selection_prompt,
 )
-from lib.discovery import build_index, get_index_stats, query_index
+from lib.discovery import build_index, get_index_stats, query_index, load_skill_registry
 from lib.dispatch import (
     MODELS, AGENT_ROUTING, QA_LEVEL_DOWN,
     get_available_models, route_task_to_model,
@@ -388,20 +388,37 @@ def analyze_task(task: str, ctx: Context = None) -> str:
             {"step": 8, "instruction": "Finish the branch", "invoke": "/finishing-a-development-branch"},
         ]
 
-    # Recommended skills based on context
+    # Recommend skills from registry based on task context
+    registry = load_skill_registry()
     result["recommended_skills"] = []
-    if is_bug:
-        result["recommended_skills"].append({"skill": "/systematic-debugging", "reason": "Bug detected — diagnose before fixing"})
+    task_lower = task.lower()
+
+    for skill in registry:
+        # Check use_when triggers
+        if any(trigger in task_lower for trigger in skill.get("use_when", [])):
+            # Check do_not_use_when anti-triggers
+            if not any(anti in task_lower for anti in skill.get("do_not_use_when", [])):
+                result["recommended_skills"].append({
+                    "skill": skill["name"],
+                    "reason": skill["description"],
+                    "phase": skill.get("phase", ""),
+                    "sequence_order": skill.get("sequence_order", 0),
+                })
+
+    # Always add workflow skills based on complexity
     if complexity == "FULL":
-        result["recommended_skills"].extend([
-            {"skill": "/brainstorming", "reason": "FULL complexity — explore approaches first"},
-            {"skill": "/writing-plans", "reason": "Create implementation plan from spec"},
-            {"skill": "/subagent-driven-development", "reason": "Execute plan with fresh agents per task"},
-        ])
-    if any(w in task.lower() for w in ["create skill", "new skill", "build skill"]):
-        result["recommended_skills"].append({"skill": "/plugin-dev:skill-development", "reason": "Creating a new skill"})
-    if any(w in task.lower() for w in ["create agent", "new agent", "build agent"]):
-        result["recommended_skills"].append({"skill": "/plugin-dev:agent-development", "reason": "Creating a new agent"})
+        workflow_skills = [s for s in registry if s.get("category") == "workflow"]
+        for ws in sorted(workflow_skills, key=lambda x: x.get("sequence_order", 99)):
+            if not any(r["skill"] == ws["name"] for r in result["recommended_skills"]):
+                result["recommended_skills"].append({
+                    "skill": ws["name"],
+                    "reason": ws["description"],
+                    "phase": ws.get("phase", ""),
+                    "sequence_order": ws.get("sequence_order", 0),
+                })
+
+    # Sort by sequence_order so the caller knows the execution order
+    result["recommended_skills"].sort(key=lambda x: x.get("sequence_order", 99))
 
     # LLM decomposition prompt for FULL complexity tasks
     if complexity == "FULL":

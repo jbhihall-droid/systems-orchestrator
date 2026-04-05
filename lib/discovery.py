@@ -347,6 +347,15 @@ def query_index(
     return results[:limit]
 
 
+def load_skill_registry() -> list[dict]:
+    """Load the skill registry from catalog/skill_registry.json."""
+    registry_path = Path(__file__).resolve().parent.parent / "catalog" / "skill_registry.json"
+    if not registry_path.exists():
+        return []
+    with open(registry_path) as f:
+        return json.load(f)
+
+
 def get_index_stats(index: list[dict[str, Any]]) -> dict[str, Any]:
     """Return summary statistics about the index."""
     by_type: dict[str, int] = {}

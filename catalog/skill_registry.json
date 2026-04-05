@@ -1,0 +1,681 @@
+[
+  {
+    "name": "/brainstorming",
+    "category": "workflow",
+    "phase": "design",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["design_spec"],
+    "use_when": [
+      "new feature",
+      "creative work",
+      "building components",
+      "adding functionality",
+      "modifying behavior"
+    ],
+    "do_not_use_when": ["simple rename", "config change", "bug fix"],
+    "description": "MANDATORY before any creative work. Explores approaches, produces design spec."
+  },
+  {
+    "name": "/writing-plans",
+    "category": "workflow",
+    "phase": "planning",
+    "sequence_order": 2,
+    "requires": ["design_spec"],
+    "produces": ["implementation_plan"],
+    "use_when": ["spec exists", "multi-step task", "before touching code"],
+    "do_not_use_when": ["no spec yet", "single-step fix"],
+    "description": "Turns spec into bite-sized implementation tasks. Requires brainstorming output."
+  },
+  {
+    "name": "/using-git-worktrees",
+    "category": "workflow",
+    "phase": "setup",
+    "sequence_order": 3,
+    "requires": ["implementation_plan"],
+    "produces": ["isolated_workspace"],
+    "use_when": ["feature work", "before implementation", "need isolation"],
+    "do_not_use_when": ["quick fix", "already in a worktree"],
+    "description": "Creates isolated git worktree for feature work."
+  },
+  {
+    "name": "/subagent-driven-development",
+    "category": "workflow",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": ["implementation_plan"],
+    "produces": ["implemented_code", "test_results"],
+    "use_when": ["executing plan", "independent tasks", "same session"],
+    "do_not_use_when": ["tightly coupled tasks", "no plan exists"],
+    "description": "Executes plan task-by-task with fresh subagents + two-stage review."
+  },
+  {
+    "name": "/executing-plans",
+    "category": "workflow",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": ["implementation_plan"],
+    "produces": ["implemented_code", "test_results"],
+    "use_when": ["executing plan", "parallel session", "batch execution"],
+    "do_not_use_when": ["same session execution preferred"],
+    "description": "Alternative to subagent-driven — execute in separate session with checkpoints."
+  },
+  {
+    "name": "/verification-before-completion",
+    "category": "workflow",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": ["implemented_code"],
+    "produces": ["verification_evidence"],
+    "use_when": ["about to claim done", "before committing", "before PR"],
+    "do_not_use_when": ["still implementing"],
+    "description": "MANDATORY before claiming work is complete. Run tests, verify output, evidence first."
+  },
+  {
+    "name": "/finishing-a-development-branch",
+    "category": "workflow",
+    "phase": "completion",
+    "sequence_order": 6,
+    "requires": ["verification_evidence"],
+    "produces": ["merged_code"],
+    "use_when": ["implementation complete", "tests pass", "ready to integrate"],
+    "do_not_use_when": ["still implementing", "tests failing"],
+    "description": "Complete development — merge, PR, or cleanup."
+  },
+  {
+    "name": "/systematic-debugging",
+    "category": "debugging",
+    "phase": "diagnosis",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["root_cause", "fix_plan"],
+    "use_when": [
+      "bug",
+      "test failure",
+      "unexpected behavior",
+      "crash",
+      "error"
+    ],
+    "do_not_use_when": ["no bug exists", "working on new feature"],
+    "description": "FIRST step for any bug. Diagnose root cause before proposing fixes."
+  },
+  {
+    "name": "/test-driven-development",
+    "category": "implementation",
+    "phase": "execution",
+    "sequence_order": 2,
+    "requires": [],
+    "produces": ["failing_test", "implementation", "passing_test"],
+    "use_when": [
+      "implementing feature",
+      "fixing bug",
+      "before writing implementation code"
+    ],
+    "do_not_use_when": ["exploring", "planning"],
+    "description": "Write failing test first, then implement. For features and bugfixes."
+  },
+  {
+    "name": "/requesting-code-review",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": ["implemented_code"],
+    "produces": ["review_feedback"],
+    "use_when": ["completing tasks", "major features", "before merging"],
+    "do_not_use_when": ["still implementing"],
+    "description": "Request code review to verify work meets requirements."
+  },
+  {
+    "name": "/receiving-code-review",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": ["review_feedback"],
+    "produces": ["addressed_feedback"],
+    "use_when": ["received review feedback", "before implementing suggestions"],
+    "do_not_use_when": ["no feedback received"],
+    "description": "Handle review feedback — verify before blindly implementing suggestions."
+  },
+  {
+    "name": "/dispatching-parallel-agents",
+    "category": "execution",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": [],
+    "produces": ["parallel_results"],
+    "use_when": [
+      "2+ independent tasks",
+      "no shared state",
+      "no sequential dependencies"
+    ],
+    "do_not_use_when": ["tasks depend on each other"],
+    "description": "Run independent tasks in parallel via subagents."
+  },
+  {
+    "name": "/writing-skills",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["skill_definition"],
+    "use_when": [
+      "creating new skill",
+      "editing existing skill",
+      "verifying skill works"
+    ],
+    "do_not_use_when": ["using a skill, not creating one"],
+    "description": "Create, edit, and verify skills."
+  },
+  {
+    "name": "/simplify",
+    "category": "quality",
+    "phase": "cleanup",
+    "sequence_order": 6,
+    "requires": ["implemented_code"],
+    "produces": ["simplified_code"],
+    "use_when": ["code review done", "refactoring", "improving readability"],
+    "do_not_use_when": ["still implementing"],
+    "description": "Review changed code for reuse, quality, and efficiency, then fix issues."
+  },
+  {
+    "name": "/code-review:code-review",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": ["implemented_code"],
+    "produces": ["review_report"],
+    "use_when": ["PR review", "code audit", "quality check"],
+    "do_not_use_when": ["still implementing"],
+    "description": "Code review a pull request."
+  },
+  {
+    "name": "/feature-dev:feature-dev",
+    "category": "workflow",
+    "phase": "design",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["feature_architecture"],
+    "use_when": ["guided feature development", "need architecture focus"],
+    "do_not_use_when": ["simple task"],
+    "description": "Guided feature development with codebase understanding and architecture focus."
+  },
+  {
+    "name": "/frontend-design:frontend-design",
+    "category": "design",
+    "phase": "design",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["ui_components"],
+    "use_when": [
+      "building web UI",
+      "frontend components",
+      "landing pages",
+      "dashboards"
+    ],
+    "do_not_use_when": ["backend only", "no UI"],
+    "description": "Create distinctive, production-grade frontend interfaces."
+  },
+  {
+    "name": "/plugin-dev:create-plugin",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["plugin_scaffold"],
+    "use_when": ["creating a plugin", "scaffolding plugin components"],
+    "do_not_use_when": ["modifying existing code"],
+    "description": "End-to-end plugin creation with commands, hooks, skills, agents."
+  },
+  {
+    "name": "/plugin-dev:skill-development",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["skill_definition"],
+    "use_when": [
+      "create a skill",
+      "improve skill description",
+      "add skill to plugin"
+    ],
+    "do_not_use_when": ["using a skill"],
+    "description": "Create or improve skills with progressive disclosure."
+  },
+  {
+    "name": "/plugin-dev:agent-development",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["agent_definition"],
+    "use_when": ["create an agent", "add agent", "write subagent"],
+    "do_not_use_when": ["using an agent"],
+    "description": "Create agents with tools, colors, and behavioral contracts."
+  },
+  {
+    "name": "/plugin-dev:hook-development",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["hook_definition"],
+    "use_when": [
+      "create a hook",
+      "validate tool use",
+      "event-driven automation"
+    ],
+    "do_not_use_when": ["not working on plugins"],
+    "description": "Create PreToolUse/PostToolUse/Stop hooks for automation."
+  },
+  {
+    "name": "/plugin-dev:mcp-integration",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["mcp_config"],
+    "use_when": ["add MCP server", "integrate MCP", "connect external service"],
+    "do_not_use_when": ["not working on plugins"],
+    "description": "Configure MCP servers in plugins."
+  },
+  {
+    "name": "/mcp-server-dev:build-mcp-server",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["mcp_server"],
+    "use_when": ["build MCP server", "create MCP", "wrap API for Claude"],
+    "do_not_use_when": ["using existing MCP"],
+    "description": "Build an MCP server that exposes tools to Claude."
+  },
+  {
+    "name": "/mcp-server-dev:build-mcp-app",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["mcp_app"],
+    "use_when": ["interactive UI", "widgets", "render components in chat"],
+    "do_not_use_when": ["no UI needed"],
+    "description": "Build MCP apps with interactive UI widgets."
+  },
+  {
+    "name": "/autoresearch-agent",
+    "category": "optimization",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": ["target_file", "eval_script"],
+    "produces": ["optimized_file"],
+    "use_when": ["optimize file by metric", "autonomous improvement loop"],
+    "do_not_use_when": ["no measurable metric"],
+    "description": "Autonomous experiment loop — edit, eval, keep improvements, discard failures."
+  },
+  {
+    "name": "/agenthub",
+    "category": "execution",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": [],
+    "produces": ["best_branch"],
+    "use_when": [
+      "parallel competition",
+      "multiple approaches",
+      "want best result"
+    ],
+    "do_not_use_when": ["single approach sufficient"],
+    "description": "Spawn N parallel subagents competing on same task, evaluate best."
+  },
+  {
+    "name": "/senior-security",
+    "category": "security",
+    "phase": "analysis",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["threat_model", "vulnerability_report"],
+    "use_when": [
+      "threat modeling",
+      "vulnerability analysis",
+      "security architecture",
+      "penetration testing"
+    ],
+    "do_not_use_when": ["not security related"],
+    "description": "STRIDE analysis, OWASP guidance, crypto patterns, security scanning."
+  },
+  {
+    "name": "/senior-secops",
+    "category": "security",
+    "phase": "operations",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["security_scan_results", "compliance_report"],
+    "use_when": [
+      "SAST/DAST scan",
+      "CVE remediation",
+      "dependency vulnerabilities",
+      "compliance"
+    ],
+    "do_not_use_when": ["not security related"],
+    "description": "Application security, vulnerability management, compliance verification."
+  },
+  {
+    "name": "/threat-detection",
+    "category": "security",
+    "phase": "analysis",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["threat_hunt_results"],
+    "use_when": ["hunting threats", "analyzing IOCs", "detecting anomalies"],
+    "do_not_use_when": ["not doing threat hunting"],
+    "description": "Hypothesis-driven threat hunting, IOC sweeps, MITRE ATT&CK mapping."
+  },
+  {
+    "name": "/incident-response",
+    "category": "security",
+    "phase": "operations",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["incident_classification", "forensic_evidence"],
+    "use_when": ["security incident", "needs triage", "evidence collection"],
+    "do_not_use_when": ["no incident"],
+    "description": "SEV1-SEV4 classification, triage, NIST SP 800-61 compliance."
+  },
+  {
+    "name": "/red-team",
+    "category": "security",
+    "phase": "analysis",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["attack_paths", "opsec_assessment"],
+    "use_when": [
+      "red team engagement",
+      "attack path analysis",
+      "offensive security"
+    ],
+    "do_not_use_when": ["defensive only"],
+    "description": "MITRE ATT&CK kill-chain, technique scoring, choke point identification."
+  },
+  {
+    "name": "/vibesec",
+    "category": "security",
+    "phase": "implementation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["secure_code"],
+    "use_when": [
+      "web application",
+      "security audit",
+      "scan for vulnerabilities"
+    ],
+    "do_not_use_when": ["not a web app"],
+    "description": "Write secure web applications. OWASP best practices."
+  },
+  {
+    "name": "/ciso-advisor",
+    "category": "security",
+    "phase": "strategy",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["risk_assessment", "compliance_roadmap"],
+    "use_when": [
+      "risk quantification",
+      "SOC 2",
+      "ISO 27001",
+      "HIPAA",
+      "board reporting"
+    ],
+    "do_not_use_when": ["technical implementation"],
+    "description": "Security leadership — risk in dollars, compliance roadmaps."
+  },
+  {
+    "name": "/senior-prompt-engineer",
+    "category": "ai",
+    "phase": "design",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["optimized_prompts", "eval_framework"],
+    "use_when": [
+      "optimize prompts",
+      "design prompt templates",
+      "evaluate LLM outputs",
+      "build agentic systems"
+    ],
+    "do_not_use_when": ["not working with prompts/LLMs"],
+    "description": "Prompt engineering patterns, LLM evaluation, agent architectures."
+  },
+  {
+    "name": "/prompt-governance",
+    "category": "ai",
+    "phase": "operations",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["prompt_registry", "eval_pipeline"],
+    "use_when": [
+      "versioning prompts",
+      "A/B testing prompts",
+      "prompt regression prevention"
+    ],
+    "do_not_use_when": ["not managing prompts at scale"],
+    "description": "Production prompt management — versioning, A/B testing, registries."
+  },
+  {
+    "name": "/claude-api",
+    "category": "ai",
+    "phase": "implementation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["api_integration"],
+    "use_when": ["code imports anthropic SDK", "using Claude API", "Agent SDK"],
+    "do_not_use_when": ["using other AI SDKs"],
+    "description": "Build apps with Claude API, Anthropic SDK, Agent SDK."
+  },
+  {
+    "name": "/agent-sdk-dev:new-sdk-app",
+    "category": "ai",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["sdk_application"],
+    "use_when": ["new Agent SDK app", "setup SDK project"],
+    "do_not_use_when": ["not building SDK apps"],
+    "description": "Create and setup a new Claude Agent SDK application."
+  },
+  {
+    "name": "/docker-development:docker-development",
+    "category": "infrastructure",
+    "phase": "implementation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["dockerfile", "compose_config"],
+    "use_when": ["optimize Dockerfile", "docker-compose", "container security"],
+    "do_not_use_when": ["no containers"],
+    "description": "Dockerfile optimization, docker-compose orchestration, container security."
+  },
+  {
+    "name": "/observability-designer",
+    "category": "infrastructure",
+    "phase": "design",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["observability_design"],
+    "use_when": ["monitoring design", "metrics", "tracing", "alerting"],
+    "do_not_use_when": ["not infrastructure"],
+    "description": "Design observability systems — metrics, tracing, alerting."
+  },
+  {
+    "name": "/commit-commands:commit",
+    "category": "git",
+    "phase": "completion",
+    "sequence_order": 6,
+    "requires": ["implemented_code"],
+    "produces": ["git_commit"],
+    "use_when": ["commit changes"],
+    "do_not_use_when": ["nothing to commit"],
+    "description": "Create a git commit."
+  },
+  {
+    "name": "/commit-commands:commit-push-pr",
+    "category": "git",
+    "phase": "completion",
+    "sequence_order": 6,
+    "requires": ["implemented_code"],
+    "produces": ["pull_request"],
+    "use_when": ["commit, push, and open PR"],
+    "do_not_use_when": ["not ready for PR"],
+    "description": "Commit, push, and open a pull request."
+  },
+  {
+    "name": "/pr-review-toolkit:review-pr",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": ["pull_request"],
+    "produces": ["pr_review"],
+    "use_when": ["review PR", "comprehensive PR review"],
+    "do_not_use_when": ["no PR exists"],
+    "description": "Comprehensive PR review using specialized agents."
+  },
+  {
+    "name": "/hookify:hookify",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["hook_rules"],
+    "use_when": [
+      "prevent unwanted behaviors",
+      "create hooks from conversation"
+    ],
+    "do_not_use_when": ["no behavior to prevent"],
+    "description": "Create hooks to prevent unwanted behaviors from conversation analysis."
+  },
+  {
+    "name": "/self-improving-agent:self-improving-agent",
+    "category": "meta",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["improved_memory", "extracted_skills"],
+    "use_when": [
+      "review MEMORY.md",
+      "promote learnings to CLAUDE.md",
+      "extract recurring solutions into skills"
+    ],
+    "do_not_use_when": ["no memory to review"],
+    "description": "Curate auto-memory into durable project knowledge."
+  },
+  {
+    "name": "/claude-md-management:revise-claude-md",
+    "category": "meta",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["updated_claude_md"],
+    "use_when": ["update CLAUDE.md with session learnings"],
+    "do_not_use_when": ["nothing learned"],
+    "description": "Update CLAUDE.md with learnings from this session."
+  },
+  {
+    "name": "/claude-md-management:claude-md-improver",
+    "category": "meta",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["improved_claude_md"],
+    "use_when": ["audit CLAUDE.md", "improve CLAUDE.md quality"],
+    "do_not_use_when": ["CLAUDE.md is fine"],
+    "description": "Audit and improve CLAUDE.md files against quality templates."
+  },
+  {
+    "name": "/claude-code-setup:claude-automation-recommender",
+    "category": "meta",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["automation_recommendations"],
+    "use_when": ["optimize Claude Code setup", "recommend automations"],
+    "do_not_use_when": ["setup is fine"],
+    "description": "Analyze codebase and recommend hooks, subagents, skills, plugins, MCP servers."
+  },
+  {
+    "name": "/spec-driven-workflow",
+    "category": "workflow",
+    "phase": "design",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["specification", "acceptance_criteria"],
+    "use_when": [
+      "write specs before code",
+      "define acceptance criteria",
+      "spec-first development"
+    ],
+    "do_not_use_when": ["implementation only"],
+    "description": "Define specs and acceptance criteria before implementation."
+  },
+  {
+    "name": "/code-to-prd:code-to-prd",
+    "category": "documentation",
+    "phase": "analysis",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["product_requirements_doc"],
+    "use_when": [
+      "reverse-engineer codebase into PRD",
+      "document existing system"
+    ],
+    "do_not_use_when": ["building from scratch"],
+    "description": "Reverse-engineer any codebase into a complete Product Requirements Document."
+  },
+  {
+    "name": "/playground:playground",
+    "category": "design",
+    "phase": "design",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["interactive_html"],
+    "use_when": [
+      "make playground",
+      "interactive explorer",
+      "visual configurator"
+    ],
+    "do_not_use_when": ["no interactive element needed"],
+    "description": "Create interactive HTML playgrounds for visual configuration."
+  },
+  {
+    "name": "/work",
+    "category": "workflow",
+    "phase": "execution",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["task_output"],
+    "use_when": ["universal task orchestration"],
+    "do_not_use_when": ["specific workflow exists"],
+    "description": "Universal task orchestration engine."
+  },
+  {
+    "name": "/skill-creator:skill-creator",
+    "category": "meta",
+    "phase": "creation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["skill_definition", "eval_results"],
+    "use_when": [
+      "create skill from scratch",
+      "run skill evals",
+      "benchmark skill performance"
+    ],
+    "do_not_use_when": ["using existing skills"],
+    "description": "Create new skills, modify existing, measure performance with evals."
+  },
+  {
+    "name": "/runbook-generator",
+    "category": "documentation",
+    "phase": "documentation",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["runbook"],
+    "use_when": ["generate operational runbook"],
+    "do_not_use_when": ["not ops related"],
+    "description": "Generate operational runbooks."
+  }
+]
