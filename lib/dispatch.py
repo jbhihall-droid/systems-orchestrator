@@ -10,11 +10,12 @@ Both are subscription models — no API keys needed.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
+
+from lib.ledger import DEPARTMENTS
 
 # ── Model Registry ───────────────────────────────────────────────────────
 
@@ -88,6 +89,8 @@ QA_LEVEL_DOWN = {
 
 def _load_playbook(playbook_dir: str, dept: str, role: str) -> str:
     """Load a department playbook file."""
+    if dept not in DEPARTMENTS:
+        return f"(Unknown department '{dept}' — use your best judgment)"
     path = Path(playbook_dir) / dept / f"{role}.md"
     if path.exists():
         return path.read_text()
@@ -390,7 +393,7 @@ def execute_dispatch(
             )
         elif model_cli == "codex":
             # codex exec "prompt"
-            cmd = [binary, "exec", "--dangerously-bypass-approvals-and-sandbox"]
+            cmd = [binary, "exec"]
             if level in config["models"]:
                 cmd.extend(["-m", config["models"][level]])
             cmd.extend(["-C", working_dir, prompt])
