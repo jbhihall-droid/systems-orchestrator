@@ -38,6 +38,7 @@ MODELS = {
         "strengths": ["code_generation", "execution", "refactoring", "testing",
                        "file_operations", "debugging", "code_review", "implementation"],
         "models": {
+            "gpt-5.4": "gpt-5.4",
             "o4-mini": "o4-mini",
             "o3": "o3",
             "gpt-4.1": "gpt-4.1",
@@ -52,7 +53,7 @@ AGENT_ROUTING = {
     # Agent role → preferred model CLI → reasoning level
     "researcher": ("claude", "sonnet"),   # Research needs broad reasoning
     "planner": ("claude", "opus"),        # Planning needs deep reasoning
-    "executor": ("codex", "o4-mini"),     # Code execution is Codex's strength
+    "executor": ("codex", "gpt-5.4"),     # Code execution is Codex's strength
     "verifier": ("claude", "sonnet"),     # QA needs careful analysis
     "reviewer": ("claude", "opus"),       # Manager review needs depth
 }
@@ -392,16 +393,25 @@ def execute_dispatch(
                 cwd=working_dir,
             )
         elif model_cli == "codex":
+            # Codex requires a git repo. Find one.
+            codex_dir = working_dir
+            check_dir = Path(working_dir)
+            while check_dir != check_dir.parent:
+                if (check_dir / ".git").exists():
+                    codex_dir = str(check_dir)
+                    break
+                check_dir = check_dir.parent
             # codex exec "prompt"
             cmd = [binary, "exec"]
             if level in config["models"]:
                 cmd.extend(["-m", config["models"][level]])
-            cmd.extend(["-C", working_dir, prompt])
+            cmd.extend(["-C", codex_dir, prompt])
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
+                cwd=codex_dir,
             )
         else:
             return {"error": f"No execution strategy for {model_cli}"}
@@ -420,6 +430,35 @@ def execute_dispatch(
         return {"error": "timeout", "model_cli": model_cli, "timeout_seconds": timeout}
     except Exception as e:
         return {"error": str(e), "model_cli": model_cli}
+
+
+def dispatch_parallel(
+    packets: list[dict[str, Any]],
+    working_dir: str = ".",
+    timeout: int = 300,
+) -> list[dict[str, Any]]:
+    """Execute multiple dispatch packets in parallel.
+    Use for independent tasks that don't share state.
+    """
+    import concurrent.futures
+
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(packets), 4)) as pool:
+        futures = {
+            pool.submit(execute_dispatch, packet, working_dir, timeout): i
+            for i, packet in enumerate(packets)
+        }
+        for future in concurrent.futures.as_completed(futures):
+            idx = futures[future]
+            try:
+                result = future.result()
+                result["parallel_index"] = idx
+                results.append(result)
+            except Exception as e:
+                results.append({"error": str(e), "parallel_index": idx})
+
+    results.sort(key=lambda x: x.get("parallel_index", 0))
+    return results
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
