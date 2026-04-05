@@ -18,9 +18,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
-import os
-import subprocess
+import re
 import sys
 import time
 from pathlib import Path
@@ -41,7 +41,7 @@ from lib.dispatch import (
 from lib.ledger import (
     get_unblocked_tasks, get_task, get_project_goal,
     submit_worker_report, submit_qa_report, submit_manager_review,
-    record_tool_outcome,
+    record_tool_outcome, log_failure,
 )
 
 MAX_REWORK = 2
@@ -62,8 +62,9 @@ def _step_researcher(project_dir: str, playbook_dir: str, task_id: str, task_con
     print(f"  [researcher] Dispatching research for {task_id}...")
     packet = craft_researcher_prompt(task_id, task_content, playbook_dir, goal)
     result = execute_dispatch(packet)
-    print(f"  [researcher] Done ({len(result)} chars)")
-    return result
+    output = result.get("output", "") if isinstance(result, dict) else str(result)
+    print(f"  [researcher] Done ({len(output)} chars)")
+    return output
 
 
 def _step_planner(project_dir: str, playbook_dir: str, task_id: str, task_content: str, goal: str) -> str:
@@ -71,8 +72,9 @@ def _step_planner(project_dir: str, playbook_dir: str, task_id: str, task_conten
     print(f"  [planner] Creating plan for {task_id}...")
     packet = craft_planner_prompt(task_id, task_content, playbook_dir, goal)
     result = execute_dispatch(packet)
-    print(f"  [planner] Done ({len(result)} chars)")
-    return result
+    output = result.get("output", "") if isinstance(result, dict) else str(result)
+    print(f"  [planner] Done ({len(output)} chars)")
+    return output
 
 
 def _step_worker(project_dir: str, playbook_dir: str, task_id: str, task_content: str, reasoning_level: str) -> str:
@@ -80,9 +82,10 @@ def _step_worker(project_dir: str, playbook_dir: str, task_id: str, task_content
     print(f"  [worker] Executing {task_id} at {reasoning_level}...")
     packet = craft_worker_prompt(task_id, task_content, playbook_dir, reasoning_level)
     result = execute_dispatch(packet)
-    print(f"  [worker] Done ({len(result)} chars)")
-    submit_worker_report(project_dir, task_id, result)
-    return result
+    output = result.get("output", "") if isinstance(result, dict) else str(result)
+    print(f"  [worker] Done ({len(output)} chars)")
+    submit_worker_report(project_dir, task_id, output)
+    return output
 
 
 def _step_qa(project_dir: str, playbook_dir: str, task_id: str, task_content: str,
@@ -92,12 +95,13 @@ def _step_qa(project_dir: str, playbook_dir: str, task_id: str, task_content: st
     print(f"  [qa] Verifying {task_id} at {qa_level} (stepped from {reasoning_level})...")
     packet = craft_qa_prompt(task_id, task_content, worker_report, playbook_dir, qa_level)
     result = execute_dispatch(packet)
-    print(f"  [qa] Done ({len(result)} chars)")
+    output = result.get("output", "") if isinstance(result, dict) else str(result)
+    print(f"  [qa] Done ({len(output)} chars)")
 
     # Extract score from QA result
-    score = _extract_qa_score(result)
-    submit_qa_report(project_dir, task_id, result, score)
-    return result, score
+    score = _extract_qa_score(output)
+    submit_qa_report(project_dir, task_id, output, score)
+    return output, score
 
 
 def _step_manager(project_dir: str, task_id: str, task_content: str,
@@ -106,34 +110,23 @@ def _step_manager(project_dir: str, task_id: str, task_content: str,
     print(f"  [manager] Reviewing {task_id} (rework #{rework_count})...")
     packet = craft_manager_prompt(task_id, task_content, worker_report, qa_report, rework_count, goal)
     result = execute_dispatch(packet)
+    output = result.get("output", "") if isinstance(result, dict) else str(result)
     print(f"  [manager] Done")
 
-    verdict = _extract_verdict(result)
-    rework_items = _extract_rework_items(result) if verdict == "REWORK" else None
+    verdict = _extract_verdict(output)
+    rework_items = _extract_rework_items(output) if verdict == "REWORK" else None
 
     # If REWORK, log a failure before submitting review (gate enforcement)
     if verdict == "REWORK":
-        from lib.ledger import create_project_ledger  # just for the path
-        failures_dir = Path(project_dir) / "project-ledger"
-        failures_dir.mkdir(parents=True, exist_ok=True)
-        failures_path = failures_dir / "failures.md"
-        import datetime
-        ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        header = "# QA Failures\n\n| Task | Check | Expected | Actual | Severity | Time |\n|------|-------|----------|--------|----------|------|\n"
-        if not failures_path.exists():
-            with open(failures_path, "w") as f:
-                f.write(header)
-        with open(failures_path, "a") as f:
-            f.write(f"| {task_id} | manager_review | pass | rework_needed | major | {ts} |\n")
+        log_failure(project_dir, task_id, "manager_review", "pass", "rework_needed", "major")
 
-    submit_manager_review(project_dir, task_id, verdict, result, rework_items)
+    submit_manager_review(project_dir, task_id, verdict, output, rework_items)
     print(f"  [manager] Verdict: {verdict}")
     return verdict
 
 
 def _extract_qa_score(qa_text: str) -> float:
     """Best-effort extraction of a QA score from the text."""
-    import re
     # Try "Score: 0.9" or "8/10" patterns
     m = re.search(r'[Ss]core[:\s]+(\d+\.?\d*)\s*/\s*(\d+)', qa_text)
     if m:
@@ -161,7 +154,6 @@ def _extract_verdict(review_text: str) -> str:
 
 def _extract_rework_items(text: str) -> list[str]:
     """Best-effort extraction of rework items."""
-    import re
     items = re.findall(r'[-*]\s+(.+)', text)
     return items[:5] if items else ["Review and fix issues noted in QA report"]
 
@@ -179,7 +171,6 @@ def run_task_pipeline(project_dir: str, playbook_dir: str, task_id: str, index: 
     goal = get_project_goal(project_dir) or "Complete the task"
 
     # Extract task description for analysis
-    import re
     desc_match = re.search(r'## Description\n(.+?)(?:\n##|\Z)', task_content, re.DOTALL)
     description = desc_match.group(1).strip() if desc_match else task_content[:500]
 
@@ -266,7 +257,7 @@ def poll_loop(project_dir: str, playbook_dir: str, poll_seconds: int, dept: str 
             time.sleep(poll_seconds)
             continue
 
-        tasks = parsed.get("tasks", [])
+        tasks = parsed.get("unblocked", [])
         if not tasks:
             print("  No unblocked tasks. Waiting...")
             if once:
@@ -275,7 +266,7 @@ def poll_loop(project_dir: str, playbook_dir: str, poll_seconds: int, dept: str 
             continue
 
         for task_info in tasks:
-            task_id = task_info.get("id", task_info) if isinstance(task_info, dict) else str(task_info)
+            task_id = task_info["task_id"] if isinstance(task_info, dict) else str(task_info)
             print(f"\n  Processing: {task_id}")
             try:
                 result = run_task_pipeline(project_dir, playbook_dir, task_id, index)
