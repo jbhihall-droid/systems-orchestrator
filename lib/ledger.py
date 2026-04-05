@@ -21,6 +21,12 @@ _TASK_ID_RE = re.compile(r"^[A-Z]{2,4}-\d{1,4}$")
 def _valid_task_id(task_id: str) -> bool:
     return bool(_TASK_ID_RE.match(task_id))
 
+def _check_length(value: str, max_len: int, field_name: str) -> str | None:
+    """Return error message if value exceeds max_len, else None."""
+    if len(value) > max_len:
+        return f"{field_name} exceeds maximum length ({len(value)} > {max_len})"
+    return None
+
 # ── Department Registry ──────────────────────────────────────────────────
 
 DEPARTMENTS = {
@@ -114,6 +120,9 @@ def create_task(
         return json.dumps({"error": f"Unknown department: {dept}", "valid": list(DEPARTMENTS.keys())})
     if size not in TASK_SIZES:
         return json.dumps({"error": f"Invalid size: {size}", "valid": list(TASK_SIZES.keys())})
+    err = _check_length(description, 10_000, "description")
+    if err:
+        return json.dumps({"error": err})
 
     tasks_dir = Path(project_dir) / "project-ledger" / "tasks" / dept
     if not tasks_dir.exists():
@@ -192,6 +201,11 @@ def submit_worker_report(project_dir: str, task_id: str, report: str) -> str:
         return json.dumps({"error": f"Task {task_id} not found"})
 
     content = path.read_text()
+    if "**Status**: VERIFIED" in content or "**Status**: ESCALATED" in content:
+        return json.dumps({"error": f"Task {task_id} is already closed (VERIFIED/ESCALATED). Cannot reopen."})
+    err = _check_length(report, 50_000, "report")
+    if err:
+        return json.dumps({"error": err})
     content = _set_status(content, "IN_REVIEW")
     content += f"\n## Worker Report\n{report}\n"
     path.write_text(content)
@@ -203,6 +217,9 @@ def submit_qa_report(project_dir: str, task_id: str, report: str, score: float) 
     """Append QA report."""
     if not _valid_task_id(task_id):
         return json.dumps({"error": f"Invalid task_id format: '{task_id}'"})
+    err = _check_length(report, 50_000, "report")
+    if err:
+        return json.dumps({"error": err})
     path = _find_task_file(project_dir, task_id)
     if not path:
         return json.dumps({"error": f"Task {task_id} not found"})
@@ -249,9 +266,7 @@ def submit_manager_review(
     # Record outcome
     _record_outcome(project_dir, task_id, verdict, notes)
 
-    # If VERIFIED, unblock dependent tasks
-    if verdict == "VERIFIED":
-        _unblock_dependents(project_dir, task_id)
+    # Unblocking is handled lazily by get_unblocked_tasks()
 
     return json.dumps({
         "task_id": task_id,
@@ -351,6 +366,12 @@ def record_tool_outcome(
     This powers the tool-level learning loop — tools that fail often get
     scored lower for similar actions.
     """
+    if not isinstance(tool_name, str) or not tool_name:
+        return json.dumps({"error": "tool_name must be a non-empty string"})
+    if not isinstance(action, str) or not action:
+        return json.dumps({"error": "action must be a non-empty string"})
+    if not isinstance(success, bool):
+        return json.dumps({"error": "success must be a boolean (true/false)"})
     outcomes_path = Path(project_dir) / "project-ledger" / "outcomes" / "tool_outcomes.jsonl"
     outcomes_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -641,13 +662,6 @@ def _record_outcome(project_dir: str, task_id: str, verdict: str, notes: str):
     }
     with open(outcomes_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
-
-
-def _unblock_dependents(project_dir: str, task_id: str):
-    """When a task is VERIFIED, check if any tasks it blocks can now start."""
-    # This is passive — get_unblocked_tasks does the real check.
-    # But we could log it for visibility.
-    pass
 
 
 def _update_dep_graph(project_dir: str, task_id: str, blocked_by: list[str], blocks: list[str]):
