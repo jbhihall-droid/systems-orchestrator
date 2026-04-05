@@ -677,5 +677,353 @@
     "use_when": ["generate operational runbook"],
     "do_not_use_when": ["not ops related"],
     "description": "Generate operational runbooks."
+  },
+  {
+    "name": "/engineering-skills:tech-debt-tracker",
+    "category": "quality",
+    "phase": "planning",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["debt_scores", "remediation_plan"],
+    "use_when": [
+      "technical debt",
+      "code quality scan",
+      "prioritize fixes",
+      "codebase health"
+    ],
+    "do_not_use_when": [],
+    "description": "Scan codebase for technical debt, score severity, and produce a prioritized remediation plan."
+  },
+  {
+    "name": "/engineering-skills:ci-cd-pipeline-builder",
+    "category": "infrastructure",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": [],
+    "produces": ["pipeline_config"],
+    "use_when": [
+      "CI/CD pipeline",
+      "github actions",
+      "gitlab ci",
+      "build pipeline"
+    ],
+    "do_not_use_when": [],
+    "description": "Design and generate CI/CD pipeline configuration for GitHub Actions, GitLab CI, or similar."
+  },
+  {
+    "name": "/engineering-skills:release-manager",
+    "category": "workflow",
+    "phase": "completion",
+    "sequence_order": 6,
+    "requires": [],
+    "produces": ["release_branch", "changelog"],
+    "use_when": ["release", "changelog", "versioning", "deploy to production"],
+    "do_not_use_when": [],
+    "description": "Manage release branches, generate changelogs, bump versions, and coordinate production deploys."
+  },
+  {
+    "name": "/engineering-skills:api-test-suite-builder",
+    "category": "quality",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["test_suite", "contract_definitions"],
+    "use_when": [
+      "API test",
+      "contract test",
+      "integration test",
+      "endpoint test"
+    ],
+    "do_not_use_when": [],
+    "description": "Build API test suites and contract definitions for endpoints and integrations."
+  },
+  {
+    "name": "/engineering-skills:dependency-auditor",
+    "category": "security",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["vulnerability_report", "upgrade_plan"],
+    "use_when": [
+      "dependency audit",
+      "CVE scan",
+      "outdated packages",
+      "supply chain"
+    ],
+    "do_not_use_when": [],
+    "description": "Audit project dependencies for known CVEs, outdated packages, and supply chain risks."
+  },
+  {
+    "name": "/engineering-skills:migration-architect",
+    "category": "infrastructure",
+    "phase": "planning",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["migration_plan", "rollback_script"],
+    "use_when": ["database migration", "schema change", "data migration"],
+    "do_not_use_when": [],
+    "description": "Design database and data migrations with forward and rollback scripts."
+  },
+  {
+    "name": "/engineering-skills:performance-profiler",
+    "category": "quality",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["performance_report", "bottleneck_rankings"],
+    "use_when": [
+      "performance",
+      "profiling",
+      "bottleneck",
+      "slow",
+      "optimize speed"
+    ],
+    "do_not_use_when": [],
+    "description": "Profile application performance, identify bottlenecks, and rank areas for optimization."
+  },
+  {
+    "name": "/engineering-skills:monorepo-navigator",
+    "category": "workflow",
+    "phase": "planning",
+    "sequence_order": 1,
+    "requires": [],
+    "produces": ["package_graph", "affected_packages"],
+    "use_when": [
+      "monorepo",
+      "package boundaries",
+      "workspace",
+      "turborepo",
+      "nx"
+    ],
+    "do_not_use_when": [],
+    "description": "Navigate monorepo structure, map package boundaries, and identify affected packages for a change."
+  },
+  {
+    "name": "/engineering-skills:adversarial-reviewer",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["vulnerability_findings"],
+    "use_when": [
+      "adversarial review",
+      "find bugs",
+      "assume wrong",
+      "devil's advocate"
+    ],
+    "do_not_use_when": [],
+    "description": "Review code adversarially — assume it is wrong and find every bug, edge case, and vulnerability."
+  },
+  {
+    "name": "/engineering-skills:focused-fix",
+    "category": "debugging",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": [],
+    "produces": ["fix_implementation"],
+    "use_when": ["deep fix", "systematic repair", "root cause fix"],
+    "do_not_use_when": [],
+    "description": "Implement a surgical, root-cause fix with full context — not a patch."
+  },
+  {
+    "name": "/trailofbits:spec-to-code-compliance",
+    "category": "verification",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["compliance_report"],
+    "use_when": [
+      "spec compliance",
+      "code matches spec",
+      "verify implementation",
+      "compare code to docs"
+    ],
+    "do_not_use_when": [],
+    "description": "Verify that implementation matches its specification; produce a compliance report of gaps."
+  },
+  {
+    "name": "/trailofbits:mutation-testing",
+    "category": "testing",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["mutation_score"],
+    "use_when": [
+      "mutation testing",
+      "test quality",
+      "test coverage quality",
+      "mewt",
+      "muton"
+    ],
+    "do_not_use_when": [],
+    "description": "Run mutation testing to measure test suite quality and identify surviving mutants."
+  },
+  {
+    "name": "/trailofbits:property-based-testing",
+    "category": "testing",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["property_tests"],
+    "use_when": [
+      "property-based test",
+      "fuzzing",
+      "random inputs",
+      "edge cases",
+      "hypothesis"
+    ],
+    "do_not_use_when": [],
+    "description": "Write property-based tests and fuzz harnesses to surface edge cases automatically."
+  },
+  {
+    "name": "/trailofbits:supply-chain-risk-auditor",
+    "category": "security",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["risk_assessment"],
+    "use_when": ["supply chain", "dependency takeover", "package risk"],
+    "do_not_use_when": [],
+    "description": "Assess software supply chain risk — typosquatting, dependency takeover, malicious packages."
+  },
+  {
+    "name": "/trailofbits:differential-review",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["security_review"],
+    "use_when": ["security PR review", "blast radius", "diff security"],
+    "do_not_use_when": [],
+    "description": "Security-focused diff review — assess blast radius and security implications of a PR."
+  },
+  {
+    "name": "/trailofbits:second-opinion",
+    "category": "review",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["external_review"],
+    "use_when": [
+      "second opinion",
+      "external review",
+      "codex review",
+      "gemini review"
+    ],
+    "do_not_use_when": [],
+    "description": "Get an independent second-opinion review of code using an external model or reviewer."
+  },
+  {
+    "name": "/trailofbits:agentic-actions-auditor",
+    "category": "security",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["ci_security_report"],
+    "use_when": ["audit CI actions", "agent security", "prompt injection CI"],
+    "do_not_use_when": [],
+    "description": "Audit CI/CD actions and agentic workflows for prompt injection and privilege escalation risks."
+  },
+  {
+    "name": "/context-engineering:kaizen",
+    "category": "quality",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["improvement_plan"],
+    "use_when": [
+      "continuous improvement",
+      "root cause analysis",
+      "retrospective",
+      "improve process"
+    ],
+    "do_not_use_when": [],
+    "description": "Apply kaizen-style continuous improvement — identify root causes and produce an actionable improvement plan."
+  },
+  {
+    "name": "/context-engineering:reflexion",
+    "category": "meta",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["reflection_insights"],
+    "use_when": ["self-reflection", "agent reflection", "improve reasoning"],
+    "do_not_use_when": [],
+    "description": "Reflexion loop — agent reflects on its own reasoning and outputs to improve next-step quality."
+  },
+  {
+    "name": "/hex-tools:quality-gate",
+    "category": "quality",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["quality_score", "gate_pass_fail"],
+    "use_when": [
+      "quality gate",
+      "quality pipeline",
+      "lint then test",
+      "check quality"
+    ],
+    "do_not_use_when": [],
+    "description": "Run a quality gate pipeline — lint, test, coverage — and return a pass/fail score."
+  },
+  {
+    "name": "/hex-tools:quality-coordinator",
+    "category": "quality",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["quality_report"],
+    "use_when": ["coordinate quality checks", "full verification"],
+    "do_not_use_when": [],
+    "description": "Coordinate all quality checks across a project and produce a consolidated quality report."
+  },
+  {
+    "name": "/hex-tools:dependency-optimization",
+    "category": "quality",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["optimized_deps"],
+    "use_when": ["optimize dependencies", "upgrade packages", "reduce bundle"],
+    "do_not_use_when": [],
+    "description": "Analyze and optimize project dependencies — remove unused, upgrade safe, reduce bundle size."
+  },
+  {
+    "name": "/hex-tools:performance-optimizer",
+    "category": "quality",
+    "phase": "optimization",
+    "sequence_order": 0,
+    "requires": [],
+    "produces": ["performance_improvements"],
+    "use_when": ["optimize performance", "profiling cycle", "bottleneck fix"],
+    "do_not_use_when": [],
+    "description": "Run an end-to-end profiling and optimization cycle to deliver measurable performance improvements."
+  },
+  {
+    "name": "/hex-tools:pipeline-orchestrator",
+    "category": "workflow",
+    "phase": "execution",
+    "sequence_order": 4,
+    "requires": [],
+    "produces": ["pipeline_results"],
+    "use_when": [
+      "pipeline orchestration",
+      "chain tasks",
+      "coordinate pipeline"
+    ],
+    "do_not_use_when": [],
+    "description": "Orchestrate multi-step task pipelines — chain, coordinate, and collect results."
+  },
+  {
+    "name": "/hex-tools:code-auditor",
+    "category": "quality",
+    "phase": "verification",
+    "sequence_order": 5,
+    "requires": [],
+    "produces": ["audit_report"],
+    "use_when": ["code audit", "code quality audit", "audit codebase"],
+    "do_not_use_when": [],
+    "description": "Comprehensive code audit — style, security, maintainability — with a full audit report."
   }
 ]
