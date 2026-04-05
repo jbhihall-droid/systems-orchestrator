@@ -73,12 +73,12 @@ FLOW_KEYWORDS: dict[str, list[str]] = {
 }
 
 ACTION_KEYWORDS: dict[str, list[str]] = {
-    "observe": ["monitor", "watch", "log", "trace", "track", "inspect", "observe", "telemetry", "metrics"],
-    "measure": ["benchmark", "profile", "measure", "perf", "latency", "throughput", "load-test"],
+    "observe": ["observe", "monitor", "watch", "log", "trace", "track", "inspect", "telemetry", "metrics"],
+    "measure": ["measure", "benchmark", "profile", "perf", "latency", "throughput", "load-test"],
     "analyze": ["analyze", "audit", "scan", "review", "assess", "investigate", "diagnose", "debug"],
     "test": ["test", "check", "validate", "assert", "expect", "spec", "coverage", "unit", "integration", "e2e"],
     "verify": ["verify", "confirm", "ensure", "guarantee", "certify", "approve"],
-    "transform": ["create", "build", "generate", "write", "implement", "deploy", "install", "configure",
+    "transform": ["transform", "create", "build", "generate", "write", "implement", "deploy", "install", "configure",
                    "update", "modify", "refactor", "fix", "patch", "migrate", "upgrade", "convert"],
     "plan": ["plan", "design", "architect", "spec", "rfc", "proposal", "roadmap", "estimate", "scope"],
 }
@@ -194,6 +194,11 @@ def classify_complexity(
     action_count = len(actions)
     flow_count = len(flows) if flows else 0
     sub_count = len(subsystems) if subsystems else 0
+
+    # DIRECT fast-track: explicit simple-task keywords
+    if any(kw in task_lower for kw in DIRECT_SIGNAL_KEYWORDS):
+        if element_count <= 1 and action_count <= 1:
+            return "DIRECT"
 
     has_full_signal = any(kw in task_lower for kw in FULL_SIGNAL_KEYWORDS)
 
