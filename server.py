@@ -18,12 +18,9 @@ Run: python3 server.py
 from __future__ import annotations
 
 import json
-import os
-import random
 import shutil
 import subprocess
 import sys
-from collections import defaultdict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -36,7 +33,7 @@ from mcp.server.fastmcp import Context, FastMCP
 SERVER_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SERVER_DIR))
 
-from lib.onboarding import OnboardingFlow, GoalAssessment, CLARIFYING_PROMPTS
+from lib.onboarding import OnboardingFlow, GoalAssessment
 from lib.analyzer import (
     ELEMENT_TYPES, ACTIONS,
     derive_system_model, classify_complexity, classify_reasoning_level,
@@ -49,7 +46,6 @@ from lib.dispatch import (
     get_available_models, route_task_to_model,
     craft_worker_prompt, craft_qa_prompt, craft_researcher_prompt,
     craft_planner_prompt, craft_manager_prompt,
-    execute_dispatch,
 )
 from lib.ledger import (
     DEPARTMENTS, TASK_SIZES,
@@ -69,6 +65,8 @@ from lib.ledger import (
     record_decision as _record_decision,
     update_project_state as _update_project_state,
     get_project_knowledge as _get_project_knowledge,
+    log_failure as _log_failure,
+    has_failure_logged as _has_failure_logged,
 )
 
 # ── Constants ────────────────────────────────────────────────────────────
@@ -80,7 +78,6 @@ ESCALATION_THRESHOLD = 5
 # ── Gate State (in-memory workflow enforcement) ──────────────────────────
 
 GATE_STATE: dict[str, Any] = {
-    "failure_logged": {},    # task_id → True (must log_failure before REWORK)
     "tool_errors": {},       # tool_name → consecutive error count
     "onboarding": None,      # OnboardingFlow instance
 }
@@ -587,6 +584,9 @@ def suggest_packages(need: str, element_type: str = "", prefer: str = "") -> str
     """
     results: dict[str, list[str]] = {}
     search_term = need.split()[0] if need.split() else need
+    import re as _re
+    if not _re.match(r'^[a-zA-Z0-9_-]+$', search_term):
+        return json.dumps({"error": f"Invalid search term: '{search_term}'. Use only letters, numbers, hyphens, underscores."})
 
     if prefer in ("", "python"):
         out = _run_cmd(f"pip3 list 2>/dev/null | grep -i '{search_term}' | head -10")
@@ -700,22 +700,7 @@ def log_failure(task_id: str, check_name: str, expected: str, actual: str, sever
         actual: What was observed.
         severity: minor | major | critical.
     """
-    if severity not in ("minor", "major", "critical"):
-        return json.dumps({"error": "severity must be minor, major, or critical"})
-
-    failures_dir = PROJECT_DIR / "project-ledger"
-    failures_dir.mkdir(parents=True, exist_ok=True)
-    failures_path = failures_dir / "failures.md"
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    entry = f"| {task_id} | {check_name} | {expected} | {actual} | {severity} | {ts} |\n"
-    header = "# QA Failures\n\n| Task | Check | Expected | Actual | Severity | Time |\n|------|-------|----------|--------|----------|------|\n"
-    if not failures_path.exists():
-        with open(failures_path, "w") as f:
-            f.write(header)
-    with open(failures_path, "a") as f:
-        f.write(entry)
-    GATE_STATE["failure_logged"][task_id] = True
-    return json.dumps({"logged": True, "task_id": task_id, "check": check_name, "severity": severity})
+    return _log_failure(str(PROJECT_DIR), task_id, check_name, expected, actual, severity)
 
 
 @mcp.tool()
@@ -734,14 +719,12 @@ def submit_manager_review(
         notes: Additional context.
         rework_items: What to fix (if REWORK).
     """
-    if verdict == "REWORK" and not GATE_STATE["failure_logged"].get(task_id):
+    if verdict == "REWORK" and not _has_failure_logged(str(PROJECT_DIR), task_id):
         return json.dumps({
             "error": "GATE_REJECTION: Call log_failure() before issuing REWORK.",
             "hint": "Record each failure first, then submit the review.",
         })
-    result = _submit_manager_review(str(PROJECT_DIR), task_id, verdict, notes, rework_items)
-    GATE_STATE["failure_logged"].pop(task_id, None)
-    return result
+    return _submit_manager_review(str(PROJECT_DIR), task_id, verdict, notes, rework_items)
 
 
 @mcp.tool()
