@@ -16,6 +16,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+_TASK_ID_RE = re.compile(r"^[A-Z]{2,4}-\d{1,4}$")
+
+def _valid_task_id(task_id: str) -> bool:
+    return bool(_TASK_ID_RE.match(task_id))
+
 # ── Department Registry ──────────────────────────────────────────────────
 
 DEPARTMENTS = {
@@ -158,6 +163,8 @@ def create_task(
 
 def get_task(project_dir: str, task_id: str) -> str:
     """Read a task file."""
+    if not _valid_task_id(task_id):
+        return json.dumps({"error": f"Invalid task_id format: '{task_id}'"})
     path = _find_task_file(project_dir, task_id)
     if not path:
         return json.dumps({"error": f"Task {task_id} not found"})
@@ -178,6 +185,8 @@ def get_project_goal(project_dir: str) -> str:
 
 def submit_worker_report(project_dir: str, task_id: str, report: str) -> str:
     """Append worker report, change status to IN_REVIEW."""
+    if not _valid_task_id(task_id):
+        return json.dumps({"error": f"Invalid task_id format: '{task_id}'"})
     path = _find_task_file(project_dir, task_id)
     if not path:
         return json.dumps({"error": f"Task {task_id} not found"})
@@ -192,6 +201,8 @@ def submit_worker_report(project_dir: str, task_id: str, report: str) -> str:
 
 def submit_qa_report(project_dir: str, task_id: str, report: str, score: float) -> str:
     """Append QA report."""
+    if not _valid_task_id(task_id):
+        return json.dumps({"error": f"Invalid task_id format: '{task_id}'"})
     path = _find_task_file(project_dir, task_id)
     if not path:
         return json.dumps({"error": f"Task {task_id} not found"})
@@ -216,6 +227,8 @@ def submit_manager_review(
     playbook_updates: dict[str, str] | None = None,
 ) -> str:
     """Record manager verdict, update status, record outcome."""
+    if not _valid_task_id(task_id):
+        return json.dumps({"error": f"Invalid task_id format: '{task_id}'"})
     if verdict not in ("VERIFIED", "REWORK", "ESCALATED"):
         return json.dumps({"error": f"Invalid verdict: {verdict}", "valid": ["VERIFIED", "REWORK", "ESCALATED"]})
 
@@ -562,10 +575,37 @@ def get_project_knowledge(project_dir: str) -> str:
     return json.dumps(result, indent=2)
 
 
+def log_failure(project_dir: str, task_id: str, check_name: str, expected: str, actual: str, severity: str = "major") -> str:
+    """Append structured QA failure to failures.md. Must be called before REWORK."""
+    if severity not in ("minor", "major", "critical"):
+        return json.dumps({"error": "severity must be minor, major, or critical"})
+    failures_path = Path(project_dir) / "project-ledger" / "failures.md"
+    failures_path.parent.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    header = "# QA Failures\n\n| Task | Check | Expected | Actual | Severity | Time |\n|------|-------|----------|--------|----------|------|\n"
+    if not failures_path.exists():
+        with open(failures_path, "w") as f:
+            f.write(header)
+    entry = f"| {task_id} | {check_name} | {expected} | {actual} | {severity} | {ts} |\n"
+    with open(failures_path, "a") as f:
+        f.write(entry)
+    return json.dumps({"logged": True, "task_id": task_id, "check": check_name, "severity": severity})
+
+
+def has_failure_logged(project_dir: str, task_id: str) -> bool:
+    """Check if any failure has been logged for this task_id in failures.md."""
+    failures_path = Path(project_dir) / "project-ledger" / "failures.md"
+    if not failures_path.exists():
+        return False
+    return f"| {task_id} |" in failures_path.read_text()
+
+
 # ── Internal Helpers ─────────────────────────────────────────────────────
 
 def _find_task_file(project_dir: str, task_id: str) -> Path | None:
     """Find a task file by ID across all department directories."""
+    if not _valid_task_id(task_id):
+        return None
     tasks_dir = Path(project_dir) / "project-ledger" / "tasks"
     if not tasks_dir.exists():
         return None
