@@ -65,6 +65,10 @@ from lib.ledger import (
     submit_manager_review as _submit_manager_review,
     record_tool_outcome as _record_tool_outcome,
     get_tool_scores as _get_tool_scores,
+    record_architecture as _record_architecture,
+    record_decision as _record_decision,
+    update_project_state as _update_project_state,
+    get_project_knowledge as _get_project_knowledge,
 )
 
 # ── Constants ────────────────────────────────────────────────────────────
@@ -121,7 +125,33 @@ async def lifespan(server):
 # ── MCP Server ───────────────────────────────────────────────────────────
 
 mcp = FastMCP(
-    "systems-orchestrator-v2",
+    "systems-orchestrator",
+    instructions="""You are a systems-thinking orchestrator that coordinates multi-agent work.
+
+START HERE — for any task or project:
+1. analyze_task() — decomposes the task, classifies complexity, matches tools
+2. If FULL: create_project_ledger() with a clear goal, then create_task() for each piece
+3. Dispatch agents: dispatch_worker, dispatch_qa, dispatch_planner, dispatch_manager
+
+For project documentation:
+- create_project_ledger() creates the structured project tracker — USE THIS, don't write files manually
+- record_architecture() captures system components, entry points, and wiring
+- record_decision() captures design decisions and reasoning
+- update_project_state() records test results, bugs found, and current status
+
+Before any action, establish:
+- What specimen are you examining? (specific element, not abstract)
+- What is your hypothesis? (what you expect to find or change)
+- What invariants must be preserved? (what must NOT change)
+
+The ledger is the single source of truth. Every agent reads from it, writes to it.
+If you write a markdown file instead of calling ledger tools, the system can't track it.
+
+Task lifecycle: create_task → dispatch_worker → submit_worker_report → dispatch_qa →
+submit_qa_report → log_failure (if issues) → submit_manager_review → VERIFIED/REWORK/ESCALATED
+
+REWORK requires log_failure() first — this is enforced. The gate exists so failures are recorded.
+""",
     lifespan=lifespan,
 )
 
@@ -778,6 +808,79 @@ def get_tool_learning(tool_name: str = "") -> str:
         tool_name: Filter to a specific tool. Empty = all.
     """
     return _get_tool_scores(str(PROJECT_DIR), tool_name)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PROJECT KNOWLEDGE TOOLS — Capture what the system IS, not just task status
+# ═══════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def record_architecture(
+    component: str,
+    module: str,
+    status: str = "OK",
+    wired: bool = True,
+    notes: str = "",
+) -> str:
+    """Record a system component — what it is, where it lives, whether it's wired.
+    Call this as you discover or build components. Builds the architecture map.
+
+    Args:
+        component: Component name (e.g. "EXECUTOR", "AUTH_MIDDLEWARE")
+        module: Module path (e.g. "engine.executor.WorkflowExecutor")
+        status: OK | BROKEN | STUB | NOT_IMPLEMENTED
+        wired: Whether it's connected in the boot path
+        notes: Additional context
+    """
+    return _record_architecture(str(PROJECT_DIR), component, module, status, wired, notes)
+
+
+@mcp.tool()
+def record_decision(
+    question: str,
+    decision: str,
+    reasoning: str = "",
+    alternatives: str = "",
+    decided_by: str = "",
+) -> str:
+    """Record a design decision — what was decided, why, and what was rejected.
+    These accumulate into a decision log explaining why the system is shaped this way.
+
+    Args:
+        question: What question was answered (e.g. "Which database?")
+        decision: What was decided (e.g. "SQLite for dev, Postgres for prod")
+        reasoning: Why this was chosen
+        alternatives: What was considered and rejected
+        decided_by: Who made the call (user, planner, researcher)
+    """
+    return _record_decision(str(PROJECT_DIR), question, decision, reasoning, alternatives, decided_by)
+
+
+@mcp.tool()
+def update_project_state(
+    category: str,
+    key: str,
+    value: str,
+    notes: str = "",
+) -> str:
+    """Record a project state change — test result, bug found, feature shipped, etc.
+
+    Args:
+        category: bugs | tests | features | dependencies | deployments | other
+        key: What specifically (e.g. "test_auth_flow", "CVE-2024-1234")
+        value: The state (e.g. "PASSING", "FIXED", "DEPLOYED", "ADDED")
+        notes: Context
+    """
+    return _update_project_state(str(PROJECT_DIR), category, key, value, notes)
+
+
+@mcp.tool()
+def get_project_knowledge() -> str:
+    """Read the full project knowledge at a glance — goal, architecture,
+    decisions, recent state changes, and task summary. Use this to understand
+    where the project stands.
+    """
+    return _get_project_knowledge(str(PROJECT_DIR))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
