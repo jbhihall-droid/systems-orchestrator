@@ -157,6 +157,15 @@ REWORK requires log_failure() first — enforced by gate.
 == BEFORE CLAIMING DONE ==
 /verification-before-completion — run tests, verify output, evidence before assertions.
 
+== VERIFICATION ARSENAL ==
+/trailofbits:spec-to-code-compliance — verify code matches spec
+/trailofbits:mutation-testing — test the quality of your tests
+/trailofbits:differential-review — security-focused PR review
+/trailofbits:second-opinion — get Codex or Gemini to review your changes
+/hex-tools:quality-gate — lint → typecheck → test → security pipeline
+/engineering-skills:api-test-suite-builder — generate API contract tests
+/engineering-skills:dependency-auditor — CVE scan + outdated packages
+
 == SKILL SEQUENCE (strict order) ==
 /brainstorming → /writing-plans → /using-git-worktrees → /subagent-driven-development → /verification-before-completion → /finishing-a-development-branch
 Never skip a step. Never start implementation before the plan exists.
@@ -169,6 +178,13 @@ Reasoning, planning, QA, review → Claude (dispatch routes planner/verifier/rev
 /plugin-dev:skill-development — create or improve a skill
 /plugin-dev:agent-development — create an agent with tools and behavioral contracts
 /plugin-dev:create-plugin — scaffold a complete plugin
+
+== QUALITY + RELEASE ==
+/engineering-skills:tech-debt-tracker — scan and prioritize tech debt
+/engineering-skills:release-manager — changelogs, versioning, release coordination
+/engineering-skills:ci-cd-pipeline-builder — generate CI/CD configs
+/engineering-skills:performance-profiler — find and fix bottlenecks
+/context-engineering:kaizen — continuous improvement via root cause analysis
 
 == PROJECT KNOWLEDGE (use ledger tools, not raw files) ==
 record_architecture() — capture components, modules, wiring
