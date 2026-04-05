@@ -123,31 +123,65 @@ async def lifespan(server):
 
 mcp = FastMCP(
     "systems-orchestrator",
-    instructions="""You are a systems-thinking orchestrator that coordinates multi-agent work.
+    instructions="""You are a systems-thinking orchestrator. You coordinate skills, agents, and tools.
 
-START HERE — for any task or project:
-1. analyze_task() — decomposes the task, classifies complexity, matches tools
-2. If FULL: create_project_ledger() with a clear goal, then create_task() for each piece
-3. Dispatch agents: dispatch_worker, dispatch_qa, dispatch_planner, dispatch_manager
+== NEW PROJECT (FULL complexity) ==
+1. start_project("goal") → refine_goal() → lock_goal()   [onboard with the user]
+2. /brainstorming                                          [explore approaches, produce spec]
+3. create_project_ledger("locked goal")                    [create the ledger — NOT a markdown file]
+4. /writing-plans                                          [turn spec into implementation plan]
+5. analyze_task() per plan step                            [decompose, classify, match tools]
+6. create_task() per step                                  [populate ledger]
+7. /subagent-driven-development                            [execute plan task-by-task with review]
 
-For project documentation:
-- create_project_ledger() creates the structured project tracker — USE THIS, don't write files manually
-- record_architecture() captures system components, entry points, and wiring
-- record_decision() captures design decisions and reasoning
-- update_project_state() records test results, bugs found, and current status
+== EXISTING PROJECT (add feature / modify) ==
+1. get_project_knowledge()                                 [understand current state]
+2. /brainstorming                                          [design the change]
+3. /writing-plans                                          [plan the implementation]
+4. create_task() per step                                  [add to ledger]
+5. /subagent-driven-development                            [execute with review]
 
-Before any action, establish:
-- What specimen are you examining? (specific element, not abstract)
-- What is your hypothesis? (what you expect to find or change)
-- What invariants must be preserved? (what must NOT change)
+== SIMPLE TASK (DIRECT / LIGHT) ==
+1. analyze_task("description")                             [classify + match tools]
+2. Just do it. No ledger, no ceremony.
 
-The ledger is the single source of truth. Every agent reads from it, writes to it.
-If you write a markdown file instead of calling ledger tools, the system can't track it.
+== BUG / FAILURE ==
+1. /systematic-debugging                                   [diagnose root cause FIRST]
+2. Then fix with /test-driven-development                  [write failing test, then fix]
 
-Task lifecycle: create_task → dispatch_worker → submit_worker_report → dispatch_qa →
-submit_qa_report → log_failure (if issues) → submit_manager_review → VERIFIED/REWORK/ESCALATED
+== PER TASK LIFECYCLE ==
+create_task → dispatch_worker → submit_worker_report → dispatch_qa →
+submit_qa_report → log_failure (if issues) → submit_manager_review
+REWORK requires log_failure() first — enforced by gate.
 
-REWORK requires log_failure() first — this is enforced. The gate exists so failures are recorded.
+== BEFORE CLAIMING DONE ==
+/verification-before-completion — run tests, verify output, evidence before assertions.
+
+== SKILL SEQUENCE (strict order) ==
+/brainstorming → /writing-plans → /using-git-worktrees → /subagent-driven-development → /verification-before-completion → /finishing-a-development-branch
+Never skip a step. Never start implementation before the plan exists.
+
+== MODEL ROUTING ==
+Code generation, refactoring, tests → Codex (dispatch routes executor to codex/o4-mini)
+Reasoning, planning, QA, review → Claude (dispatch routes planner/verifier/reviewer to claude)
+
+== CREATING NEW SKILLS/AGENTS ==
+/plugin-dev:skill-development — create or improve a skill
+/plugin-dev:agent-development — create an agent with tools and behavioral contracts
+/plugin-dev:create-plugin — scaffold a complete plugin
+
+== PROJECT KNOWLEDGE (use ledger tools, not raw files) ==
+record_architecture() — capture components, modules, wiring
+record_decision() — capture decisions and reasoning
+update_project_state() — record test results, bugs, features, deployments
+get_project_knowledge() — read the full project state at a glance
+
+== PRINCIPLES ==
+- Specimen: what specific element are you examining?
+- Hypothesis: what do you expect to find or change?
+- Invariant: what must NOT change?
+- Leverage before build: check if an existing tool/skill solves it first.
+- The ledger is the single source of truth. Write to it, not to random files.
 """,
     lifespan=lifespan,
 )
@@ -321,26 +355,53 @@ def analyze_task(task: str, ctx: Context = None) -> str:
         "action_required": [],
     }
 
-    # Build action steps
+    # Build action steps — mix MCP tools and skills in correct sequence
+    is_bug = any(w in task.lower() for w in ["bug", "fix", "crash", "error", "broken", "failing", "debug"])
+
     if complexity == "DIRECT":
-        result["action_required"] = [{
-            "step": 1,
-            "instruction": "Execute directly. No ceremony needed.",
-            "model": model_cli,
-        }]
+        if is_bug:
+            result["action_required"] = [
+                {"step": 1, "instruction": "Diagnose root cause", "invoke": "/systematic-debugging"},
+                {"step": 2, "instruction": "Write failing test, then fix", "invoke": "/test-driven-development"},
+                {"step": 3, "instruction": "Verify fix", "invoke": "/verification-before-completion"},
+            ]
+        else:
+            result["action_required"] = [
+                {"step": 1, "instruction": "Execute directly. No ceremony needed.", "model": model_cli},
+            ]
     elif complexity == "LIGHT":
         result["action_required"] = [
-            {"step": 1, "instruction": "Execute task", "agent": "executor", "model": model_cli},
-            {"step": 2, "instruction": "Verify result", "agent": "verifier", "model": "claude"},
+            {"step": 1, "instruction": "Create task in ledger", "invoke": "create_task()"},
+            {"step": 2, "instruction": "Execute task", "agent": "executor", "model": model_cli},
+            {"step": 3, "instruction": "Verify result", "agent": "verifier", "model": "claude"},
+            {"step": 4, "instruction": "Confirm before committing", "invoke": "/verification-before-completion"},
         ]
     else:  # FULL
         result["action_required"] = [
-            {"step": 1, "instruction": "Research requirements", "agent": "researcher", "model": "claude"},
-            {"step": 2, "instruction": "Create execution plan", "agent": "planner", "model": "claude"},
-            {"step": 3, "instruction": "Execute plan", "agent": "executor", "model": model_cli},
-            {"step": 4, "instruction": "Verify results", "agent": "verifier", "model": "claude"},
-            {"step": 5, "instruction": "Manager review", "agent": "reviewer", "model": "claude"},
+            {"step": 1, "instruction": "Onboard — define and lock the goal", "invoke": "start_project() → refine_goal() → lock_goal()"},
+            {"step": 2, "instruction": "Explore approaches, produce design spec", "invoke": "/brainstorming"},
+            {"step": 3, "instruction": "Create project ledger with locked goal", "invoke": "create_project_ledger()"},
+            {"step": 4, "instruction": "Turn spec into implementation plan", "invoke": "/writing-plans"},
+            {"step": 5, "instruction": "Decompose each plan step", "invoke": "analyze_task() per step → create_task()"},
+            {"step": 6, "instruction": "Execute plan task-by-task with review", "invoke": "/subagent-driven-development"},
+            {"step": 7, "instruction": "Verify all work before claiming done", "invoke": "/verification-before-completion"},
+            {"step": 8, "instruction": "Finish the branch", "invoke": "/finishing-a-development-branch"},
         ]
+
+    # Recommended skills based on context
+    result["recommended_skills"] = []
+    if is_bug:
+        result["recommended_skills"].append({"skill": "/systematic-debugging", "reason": "Bug detected — diagnose before fixing"})
+    if complexity == "FULL":
+        result["recommended_skills"].extend([
+            {"skill": "/brainstorming", "reason": "FULL complexity — explore approaches first"},
+            {"skill": "/writing-plans", "reason": "Create implementation plan from spec"},
+            {"skill": "/subagent-driven-development", "reason": "Execute plan with fresh agents per task"},
+        ])
+    if any(w in task.lower() for w in ["create skill", "new skill", "build skill"]):
+        result["recommended_skills"].append({"skill": "/plugin-dev:skill-development", "reason": "Creating a new skill"})
+    if any(w in task.lower() for w in ["create agent", "new agent", "build agent"]):
+        result["recommended_skills"].append({"skill": "/plugin-dev:agent-development", "reason": "Creating a new agent"})
 
     # LLM decomposition prompt for FULL complexity tasks
     if complexity == "FULL":
