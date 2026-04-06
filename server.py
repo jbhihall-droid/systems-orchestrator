@@ -136,79 +136,80 @@ mcp = FastMCP(
     "systems-orchestrator",
     instructions="""You are a systems-thinking orchestrator. You coordinate skills, agents, and tools.
 
-== NEW PROJECT (FULL complexity) ==
-1. start_project("goal") → refine_goal() → lock_goal()   [onboard with the user]
-2. /brainstorming                                          [explore approaches, produce spec]
-3. create_project_ledger("locked goal")                    [create the ledger — NOT a markdown file]
-4. /writing-plans                                          [turn spec into implementation plan]
-5. analyze_task() per plan step                            [decompose, classify, match tools]
-6. create_task() per step                                  [populate ledger]
-7. /subagent-driven-development                            [execute plan task-by-task with review]
+== HOW TO USE THIS MCP SERVER ==
+Every tool returns JSON. You MUST read the JSON response and present the key findings
+to the user in clear, natural language. Do not just call the tool silently — always
+summarize what you learned from the response. Specifically:
 
-== EXISTING PROJECT (add feature / modify) ==
-1. get_project_knowledge()                                 [understand current state]
-2. /brainstorming                                          [design the change]
-3. /writing-plans                                          [plan the implementation]
-4. create_task() per step                                  [add to ledger]
-5. /subagent-driven-development                            [execute with review]
+- analyze_task() → Tell the user: complexity level, what tools match, what steps to take
+- query_capabilities() → Show the user which tools were found and what they do
+- system_snapshot() → Summarize: what's running, what ports are open, disk usage
+- health_check() → Report which tools are installed vs missing
+- model_status() → Tell the user which AI models are available and how routing works
+- start_project/refine_goal/lock_goal → Show the assessment, ask the user the probe questions
+- decompose_task() → Present the system model: elements, flows, actions needed
+- create_task/get_task → Confirm what was created, show task details
+- dispatch_worker/dispatch_qa → Show the agent's output and any issues found
+- submit_manager_review → Report the verdict: VERIFIED, REWORK, or ESCALATED
+- get_project_knowledge() → Summarize the project state for the user
+- suggest_packages() → Show package options the user can install
+- impact_analysis() → Present the assessment structure to fill in
 
-== SIMPLE TASK (DIRECT / LIGHT) ==
-1. analyze_task("description")                             [classify + match tools]
-2. Just do it. No ledger, no ceremony.
+When a response contains "action_required" steps, walk the user through them.
+When a response contains "matched_tools", explain which tools are relevant and why.
+When a response contains "recommended_skills", tell the user which skills to invoke.
+When a response contains an "error", explain what went wrong and suggest a fix.
+When a response contains "hint" or "_hint", follow that guidance.
 
-== BUG / FAILURE ==
-1. /systematic-debugging                                   [diagnose root cause FIRST]
-2. Then fix with /test-driven-development                  [write failing test, then fix]
+== WHEN TO USE WHICH TOOL ==
+- User describes a task → analyze_task() first, then follow the action_required steps
+- User wants to see what tools exist → query_capabilities()
+- User wants to start a project → start_project() → refine_goal() → lock_goal()
+- User asks about system state → system_snapshot()
+- User asks if a tool is installed → health_check()
+- User wants to know about AI models → model_status()
 
-== PER TASK LIFECYCLE ==
+== WORKFLOW PATTERNS ==
+
+NEW PROJECT (FULL complexity):
+1. start_project("goal") → refine_goal() → lock_goal()
+2. /brainstorming → /writing-plans
+3. create_project_ledger("locked goal")
+4. analyze_task() per plan step → create_task() per step
+5. /subagent-driven-development
+6. /verification-before-completion
+
+SIMPLE TASK (DIRECT):
+1. analyze_task("description") — follow the action_required steps
+2. Just do it. No ledger needed.
+
+BUG FIX:
+1. /systematic-debugging — diagnose root cause FIRST
+2. /test-driven-development — write failing test, then fix
+
+== TASK LIFECYCLE ==
 create_task → dispatch_worker → submit_worker_report → dispatch_qa →
 submit_qa_report → log_failure (if issues) → submit_manager_review
 REWORK requires log_failure() first — enforced by gate.
 
-== BEFORE CLAIMING DONE ==
-/verification-before-completion — run tests, verify output, evidence before assertions.
-
-== VERIFICATION ARSENAL ==
-/trailofbits:spec-to-code-compliance — verify code matches spec
-/trailofbits:mutation-testing — test the quality of your tests
-/trailofbits:differential-review — security-focused PR review
-/trailofbits:second-opinion — get Codex or Gemini to review your changes
-/hex-tools:quality-gate — lint → typecheck → test → security pipeline
-/engineering-skills:api-test-suite-builder — generate API contract tests
-/engineering-skills:dependency-auditor — CVE scan + outdated packages
-
-== SKILL SEQUENCE (strict order) ==
-/brainstorming → /writing-plans → /using-git-worktrees → /subagent-driven-development → /verification-before-completion → /finishing-a-development-branch
-Never skip a step. Never start implementation before the plan exists.
-
 == MODEL ROUTING ==
-Code generation, refactoring, tests → Codex (dispatch routes executor to codex/gpt-5.4)
-Reasoning, planning, QA, review → Claude (dispatch routes planner/verifier/reviewer to claude)
+Code generation, refactoring, tests → Codex (if installed, else Claude)
+Reasoning, planning, QA, review → Claude
 
-== CREATING NEW SKILLS/AGENTS ==
-/plugin-dev:skill-development — create or improve a skill
-/plugin-dev:agent-development — create an agent with tools and behavioral contracts
-/plugin-dev:create-plugin — scaffold a complete plugin
-
-== QUALITY + RELEASE ==
-/engineering-skills:tech-debt-tracker — scan and prioritize tech debt
-/engineering-skills:release-manager — changelogs, versioning, release coordination
-/engineering-skills:ci-cd-pipeline-builder — generate CI/CD configs
-/engineering-skills:performance-profiler — find and fix bottlenecks
-/context-engineering:kaizen — continuous improvement via root cause analysis
-
-== PROJECT KNOWLEDGE (use ledger tools, not raw files) ==
-record_architecture() — capture components, modules, wiring
-record_decision() — capture decisions and reasoning
-update_project_state() — record test results, bugs, features, deployments
-get_project_knowledge() — read the full project state at a glance
+== KEY SKILLS (invoke with /skill-name) ==
+/brainstorming — explore approaches before building
+/writing-plans — turn spec into implementation tasks
+/systematic-debugging — diagnose bugs methodically
+/test-driven-development — write failing test, then implement
+/verification-before-completion — evidence before claiming done
+/frontend-design:frontend-design — build web UIs
+/senior-security — threat modeling and security analysis
+/claude-api — build apps with Claude API/SDK
 
 == PRINCIPLES ==
-- Specimen: what specific element are you examining?
-- Hypothesis: what do you expect to find or change?
-- Invariant: what must NOT change?
-- Leverage before build: check if an existing tool/skill solves it first.
-- The ledger is the single source of truth. Write to it, not to random files.
+- Always present MCP tool results to the user — never call silently
+- Leverage before build: check if an existing tool/skill solves it first
+- The ledger is the single source of truth for project state
 """,
     lifespan=lifespan,
 )
@@ -364,7 +365,15 @@ def analyze_task(task: str, ctx: Context = None) -> str:
     model_cli, model_level = route_task_to_model(task_type, "executor")
 
     # 6. Build response
+    tool_names = [t["tool"] for t in matched_tools[:5]]
+    _summary = (
+        f"Task classified as {complexity} complexity, reasoning level {reasoning}. "
+        f"Routing to {model_cli}/{model_level} (task type: {task_type}). "
+        f"Top tool matches: {', '.join(tool_names) if tool_names else 'none found'}. "
+        f"Found {len(elements)} system elements, {len(flows)} flows, {len(actions)} actions."
+    )
     result: dict[str, Any] = {
+        "_summary": _summary,
         "task": task,
         "system_model": {
             "elements": elements,
@@ -493,7 +502,17 @@ def query_capabilities(
     results = query_index(index, query, tool_type, category, action)
     stats = get_index_stats(index)
 
+    tool_lines = [f"  - {r['name']}: {r.get('description', '')}" for r in results[:5]]
+    _summary = (
+        f"Found {len(results)} matching capabilities"
+        + (f" for '{query}'" if query else "")
+        + (f" (type={tool_type})" if tool_type else "")
+        + (f" (category={category})" if category else "")
+        + f". Index has {stats['total']} total ({stats['installed']} installed)."
+        + ("\nTop matches:\n" + "\n".join(tool_lines) if tool_lines else "")
+    )
     return json.dumps({
+        "_summary": _summary,
         "results": results[:15],
         "result_count": len(results),
         "index_stats": stats,
@@ -618,7 +637,18 @@ def system_snapshot() -> str:
             return json.dumps({"error": escalation})
     else:
         clear_tool_errors("system_snapshot")
-    return json.dumps({"timestamp": ts, "elements": elements}, indent=2, default=str)
+
+    port_count = len([p for p in elements.get("listening_ports", []) if p.startswith("LISTEN")])
+    proc_count = len(elements.get("running_processes", [])) - 1  # minus header
+    container_count = len(elements.get("containers", [])) - 1  # minus header
+    _summary = (
+        f"System snapshot at {ts}: "
+        f"{port_count} listening ports, "
+        f"{max(0, proc_count)} top processes, "
+        f"{max(0, container_count)} containers running. "
+        f"Disk: {elements.get('disk_usage', ['unknown'])[1] if len(elements.get('disk_usage', [])) > 1 else 'unknown'}"
+    )
+    return json.dumps({"_summary": _summary, "timestamp": ts, "elements": elements}, indent=2, default=str)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -654,7 +684,14 @@ def health_check(capabilities: list[str] | None = None, ctx: Context = None) -> 
                     break
         results.append(entry)
 
-    return json.dumps(results, indent=2, default=str)
+    installed = [r["name"] for r in results if r["installed"]]
+    missing = [r["name"] for r in results if not r["installed"]]
+    _summary = (
+        f"Checked {len(results)} tools. "
+        f"Installed: {', '.join(installed) if installed else 'none'}. "
+        + (f"Missing: {', '.join(missing)}." if missing else "All present.")
+    )
+    return json.dumps({"_summary": _summary, "tools": results}, indent=2, default=str)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -671,7 +708,14 @@ def model_status() -> str:
         "agent_routing": {k: {"model": v[0], "level": v[1]} for k, v in AGENT_ROUTING.items()},
         "qa_step_down": QA_LEVEL_DOWN,
     }
-    return json.dumps({"models": models, "routing": routing}, indent=2)
+    installed = [n for n, m in models.items() if m["installed"]]
+    missing = [n for n, m in models.items() if not m["installed"]]
+    _summary = (
+        f"Models installed: {', '.join(installed) if installed else 'none'}. "
+        + (f"Not installed: {', '.join(missing)}. " if missing else "")
+        + f"Executor routes to {AGENT_ROUTING['executor'][0]}/{AGENT_ROUTING['executor'][1]}."
+    )
+    return json.dumps({"_summary": _summary, "models": models, "routing": routing}, indent=2)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
