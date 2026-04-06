@@ -155,6 +155,17 @@ def _get_reasoning_depth(level: str) -> str:
     return depths.get(level, depths["sonnet"])
 
 
+# ── Agent MCP Context ────────────────────────────────────────────────────
+
+_MCP_CONTEXT = """
+## Available MCP Tools
+You have access to MCP servers including Dobby (systems orchestrator).
+You can call Dobby tools like analyze_task(), query_capabilities(), health_check()
+to research capabilities. You can also use sequential-thinking MCP for complex
+reasoning. If you need sub-tasks done, you can use the Agent tool to spawn subagents.
+Use WebSearch/WebFetch for external research. Use Bash for system commands.
+"""
+
 # ── Agent Prompt Crafting ─────────────────────────────────────────────────
 
 def craft_worker_prompt(
@@ -190,6 +201,7 @@ def craft_worker_prompt(
 - If you're blocked, say so clearly and list what you need.
 - Do not guess at requirements. Implement what is described.
 
+{_MCP_CONTEXT}
 ## Output
 Write your worker report following the department playbook format.
 """
@@ -238,7 +250,7 @@ def craft_qa_prompt(
 - Check each claim against actual evidence (files, test output, etc.)
 - Score: count PASS items / total items.
 - If score < 0.9, list each failure clearly: check_name, expected, actual, severity.
-
+{_MCP_CONTEXT}
 ## Output
 1. Verification checklist with PASS/FAIL for each item.
 2. Overall score (0.0+).
@@ -279,7 +291,7 @@ def craft_researcher_prompt(
 2. Research the technical landscape. What tools, patterns, prior art exist?
 3. Identify risks and potential blockers.
 4. Recommend an approach but DO NOT implement.
-
+{_MCP_CONTEXT}
 ## Output
 A structured research report with: findings, risks, recommendations, and time estimate.
 """
@@ -322,7 +334,7 @@ def craft_planner_prompt(
 2. For each step: what tool/command to use, what file to create/modify, what test confirms it's done.
 3. Identify dependencies between steps.
 4. Flag anything that needs user input before proceeding.
-
+{_MCP_CONTEXT}
 ## Output
 An ordered plan with: step number, description, tool/command, expected output, dependencies.
 """
@@ -380,6 +392,7 @@ Issue a verdict:
 - **REWORK**: Specific issues need fixing. List exactly what.
 - **ESCALATED**: Fundamental problem. Needs human intervention.
 
+{_MCP_CONTEXT}
 ## Output
 1. Verdict: VERIFIED | REWORK | ESCALATED
 2. Reasoning (brief).
@@ -431,6 +444,14 @@ def execute_dispatch(
             cmd = [binary, "-p", "--permission-mode", perm_mode]
             if level in config["models"]:
                 cmd.extend(["--model", config["models"][level]])
+            # Give subagents access to MCP servers so they can call Dobby,
+            # sequential-thinking, and other tools — enables agent nesting
+            mcp_config = Path.home() / ".mcp.json"
+            if mcp_config.exists():
+                cmd.extend(["--mcp-config", str(mcp_config)])
+            # Give subagents access to the working directory
+            if working_dir and working_dir != ".":
+                cmd.extend(["--add-dir", working_dir])
             result = subprocess.run(
                 cmd,
                 input=prompt,
