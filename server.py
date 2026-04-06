@@ -164,6 +164,16 @@ summarize what you learned from the response. Specifically:
 - impact_analysis() → Present the assessment structure to fill in
 - install_mcp_servers() → Show which MCP servers were installed, remind to restart CC
 - get_workflows() → Show workflow steps clearly, guide user through each step
+- run_workflow() → Show which workflow is starting, current step, total steps, what to invoke
+- advance_workflow() → Show completed step summary, next step, progress bar (Step 3 of 5)
+- workflow_status() → Show progress bar and completed/remaining steps
+
+IMPORTANT: When a workflow is running, ALWAYS show the user:
+  1. The workflow name and total steps
+  2. Which step they're on (e.g. "Step 2 of 5: Plan")
+  3. What was completed so far
+  4. What to do now and what tool/skill to invoke
+  Never run workflow steps silently — the user must see the work being done.
 
 When a response contains "action_required" steps, walk the user through them.
 When a response contains "matched_tools", explain which tools are relevant and why.
@@ -180,7 +190,10 @@ When a response contains "hint" or "_hint", follow that guidance.
 - User wants to know about AI models → model_status()
 - User wants to install MCP servers → install_mcp_servers()
 - User asks about workflows or "how do I..." → get_workflows()
-- User says "build a feature" → get_workflows(workflow="feature-dev") then guide them
+- User says "build a feature" → run_workflow(workflow="feature-dev", task="...") to start
+- Workflow running → show current step, what to do, progress (Step 2 of 5)
+- Step done → call advance_workflow(session_id) to get next step
+- Check progress → workflow_status(session_id)
 
 == WORKFLOW PATTERNS ==
 
@@ -1687,6 +1700,239 @@ def get_workflows(workflow: str = "") -> str:
         "_summary": _summary,
         "workflows": listing,
     }, indent=2)
+
+
+# ── Workflow Execution State ─────────────────────────────────────────────
+# Tracks active workflow progress so the host can query stage status
+
+_ACTIVE_WORKFLOWS: dict[str, dict] = {}
+
+
+@mcp.tool()
+async def run_workflow(workflow: str, task: str = "", ctx: Context = None) -> str:
+    """Start a workflow and get the first step with full instructions.
+
+    This is the main way to execute a workflow. Call this to begin, then
+    follow each step. After completing a step, call advance_workflow()
+    to get the next step.
+
+    The host MUST show the user:
+    - Which workflow is running and how many steps total
+    - The current step number and what to do
+    - Progress through the workflow (e.g. "Step 2 of 5")
+
+    Args:
+        workflow: Workflow key (e.g. "automation", "beautiful-ui", "bug-fix")
+        task: The user's original task description (for context in each step)
+    """
+    if workflow not in WORKFLOW_TEMPLATES:
+        # LLM-select if not an exact key
+        llm_pick = _llm_select_workflow(task or workflow)
+        if llm_pick:
+            workflow = llm_pick
+        else:
+            return json.dumps({
+                "_summary": f"Unknown workflow '{workflow}'. Call get_workflows() to see available options.",
+                "error": f"Unknown workflow: {workflow}",
+            }, indent=2)
+
+    wf = WORKFLOW_TEMPLATES[workflow]
+    total = len(wf["steps"])
+    session_id = f"wf_{workflow}_{id(wf)}"
+
+    _ACTIVE_WORKFLOWS[session_id] = {
+        "workflow": workflow,
+        "label": wf["label"],
+        "task": task,
+        "current_step": 0,
+        "total_steps": total,
+        "completed_steps": [],
+        "status": "running",
+    }
+
+    step = wf["steps"][0]
+    if ctx:
+        await ctx.report_progress(0, total, f"Starting workflow: {wf['label']}")
+        await ctx.report_progress(1, total, f"Step 1/{total}: {step['name']}")
+
+    _summary = (
+        f"== WORKFLOW: {wf['label']} ==\n"
+        f"Task: {task or '(none specified)'}\n"
+        f"Total steps: {total}\n\n"
+        f"▶ STEP 1 of {total}: {step['name']}\n"
+        f"  What to do: {step['description']}\n"
+        f"  Invoke: {step['invoke']}\n\n"
+        f"Upcoming:\n"
+        + "\n".join(f"  {i+2}. {s['name']} — {s['description']}" for i, s in enumerate(wf["steps"][1:]))
+        + f"\n\nAfter completing this step, call advance_workflow(session_id='{session_id}')."
+    )
+
+    return json.dumps({
+        "_summary": _summary,
+        "session_id": session_id,
+        "workflow": workflow,
+        "label": wf["label"],
+        "total_steps": total,
+        "current_step": 1,
+        "step": {
+            "number": 1,
+            "name": step["name"],
+            "invoke": step["invoke"],
+            "description": step["description"],
+        },
+        "remaining": [{"number": i+2, "name": s["name"], "description": s["description"]}
+                       for i, s in enumerate(wf["steps"][1:])],
+    }, indent=2)
+
+
+@mcp.tool()
+async def advance_workflow(session_id: str, step_result: str = "", ctx: Context = None) -> str:
+    """Advance to the next step in a running workflow.
+
+    Call this after completing the current step. Include what was accomplished
+    in step_result so the workflow tracks progress.
+
+    The host MUST show the user:
+    - What step just completed
+    - What the next step is
+    - Overall progress (e.g. "Step 3 of 5 complete")
+
+    Args:
+        session_id: The workflow session ID from run_workflow()
+        step_result: Brief summary of what was accomplished in the current step
+    """
+    state = _ACTIVE_WORKFLOWS.get(session_id)
+    if not state:
+        return json.dumps({
+            "_summary": "No active workflow with that session ID. Call run_workflow() to start one.",
+            "error": "Invalid session_id",
+        }, indent=2)
+
+    wf = WORKFLOW_TEMPLATES[state["workflow"]]
+    completed_idx = state["current_step"]
+    total = state["total_steps"]
+
+    # Record completion of current step
+    state["completed_steps"].append({
+        "step": completed_idx + 1,
+        "name": wf["steps"][completed_idx]["name"],
+        "result": step_result or "(completed)",
+    })
+
+    next_idx = completed_idx + 1
+    state["current_step"] = next_idx
+
+    if ctx:
+        await ctx.report_progress(next_idx, total,
+            f"✓ Step {completed_idx + 1}/{total} ({wf['steps'][completed_idx]['name']}) complete")
+
+    # Check if workflow is done
+    if next_idx >= total:
+        state["status"] = "completed"
+        if ctx:
+            await ctx.report_progress(total, total, f"✓ Workflow '{state['label']}' complete!")
+
+        completed_summary = "\n".join(
+            f"  ✓ {s['step']}. {s['name']}: {s['result']}" for s in state["completed_steps"]
+        )
+        _summary = (
+            f"== WORKFLOW COMPLETE: {state['label']} ==\n"
+            f"All {total} steps finished.\n\n"
+            f"Completed steps:\n{completed_summary}\n"
+        )
+        return json.dumps({
+            "_summary": _summary,
+            "status": "completed",
+            "workflow": state["workflow"],
+            "total_steps": total,
+            "completed_steps": state["completed_steps"],
+        }, indent=2)
+
+    # Return next step
+    step = wf["steps"][next_idx]
+    if ctx:
+        await ctx.report_progress(next_idx, total,
+            f"▶ Step {next_idx + 1}/{total}: {step['name']}")
+
+    completed_summary = "\n".join(
+        f"  ✓ {s['step']}. {s['name']}: {s['result']}" for s in state["completed_steps"]
+    )
+    _summary = (
+        f"== WORKFLOW: {state['label']} — Step {next_idx + 1} of {total} ==\n\n"
+        f"Completed:\n{completed_summary}\n\n"
+        f"▶ STEP {next_idx + 1} of {total}: {step['name']}\n"
+        f"  What to do: {step['description']}\n"
+        f"  Invoke: {step['invoke']}\n"
+        + (f"\n  Remaining: {', '.join(s['name'] for s in wf['steps'][next_idx + 1:])}\n" if next_idx + 1 < total else "")
+        + f"\nCall advance_workflow(session_id='{session_id}') when this step is done."
+    )
+
+    return json.dumps({
+        "_summary": _summary,
+        "session_id": session_id,
+        "status": "running",
+        "current_step": next_idx + 1,
+        "total_steps": total,
+        "step": {
+            "number": next_idx + 1,
+            "name": step["name"],
+            "invoke": step["invoke"],
+            "description": step["description"],
+        },
+        "completed_steps": state["completed_steps"],
+        "remaining": [{"number": i + next_idx + 2, "name": s["name"], "description": s["description"]}
+                       for i, s in enumerate(wf["steps"][next_idx + 1:])],
+    }, indent=2)
+
+
+@mcp.tool()
+def workflow_status(session_id: str = "") -> str:
+    """Check the status of active workflows.
+
+    Args:
+        session_id: Specific workflow session to check. Empty = list all active.
+    """
+    if session_id and session_id in _ACTIVE_WORKFLOWS:
+        state = _ACTIVE_WORKFLOWS[session_id]
+        wf = WORKFLOW_TEMPLATES.get(state["workflow"], {})
+        total = state["total_steps"]
+        current = state["current_step"]
+        completed = len(state["completed_steps"])
+
+        progress_bar = "█" * completed + "░" * (total - completed)
+        _summary = (
+            f"Workflow: {state['label']} [{progress_bar}] {completed}/{total}\n"
+            f"Status: {state['status']}\n"
+            f"Task: {state.get('task', '')}\n"
+        )
+        if state["completed_steps"]:
+            _summary += "\nCompleted:\n" + "\n".join(
+                f"  ✓ {s['name']}: {s['result']}" for s in state["completed_steps"]
+            )
+        if current < total:
+            step = wf["steps"][current]
+            _summary += f"\n\nCurrent: Step {current + 1} — {step['name']}: {step['description']}"
+
+        return json.dumps({"_summary": _summary, **state}, indent=2)
+
+    # List all active
+    if not _ACTIVE_WORKFLOWS:
+        return json.dumps({"_summary": "No active workflows.", "workflows": []}, indent=2)
+
+    workflows = []
+    for sid, state in _ACTIVE_WORKFLOWS.items():
+        completed = len(state["completed_steps"])
+        total = state["total_steps"]
+        workflows.append({
+            "session_id": sid,
+            "workflow": state["label"],
+            "progress": f"{completed}/{total}",
+            "status": state["status"],
+        })
+    _summary = "Active workflows:\n" + "\n".join(
+        f"  {w['workflow']}: {w['progress']} ({w['status']})" for w in workflows
+    )
+    return json.dumps({"_summary": _summary, "workflows": workflows}, indent=2)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
