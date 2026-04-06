@@ -11,7 +11,6 @@ Asks what you do, suggests tool packs, offers to install missing ones.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys

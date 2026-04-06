@@ -23,16 +23,23 @@ _CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
 
 
 def _load_dispatch_config() -> dict:
-    """Load dispatch config from setup, with sensible defaults."""
+    """Load dispatch + model config from setup, with sensible defaults."""
     defaults = {
         "permission_mode": "bypassPermissions",
         "timeout_seconds": 300,
         "max_parallel": 4,
+        "default_level": "sonnet",
+        "preferred_executor": "claude",
     }
     if _CONFIG_PATH.exists():
         try:
             config = json.loads(_CONFIG_PATH.read_text())
-            return {**defaults, **config.get("dispatch", {})}
+            merged = {**defaults, **config.get("dispatch", {})}
+            # Also load model preferences
+            models_cfg = config.get("models", {})
+            merged["default_level"] = models_cfg.get("default_level", defaults["default_level"])
+            merged["preferred_executor"] = models_cfg.get("preferred_executor", defaults["preferred_executor"])
+            return merged
         except (json.JSONDecodeError, KeyError):
             pass
     return defaults
@@ -153,6 +160,11 @@ def _get_reasoning_depth(level: str) -> str:
         "gpt-4.1": "Comprehensive implementation with full test coverage.",
     }
     return depths.get(level, depths["sonnet"])
+
+
+def get_configured_default_level() -> str:
+    """Get the user's configured default reasoning level."""
+    return _DISPATCH_CONFIG.get("default_level", "sonnet")
 
 
 # ── Agent MCP Context ────────────────────────────────────────────────────

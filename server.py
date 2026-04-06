@@ -37,19 +37,18 @@ from lib.onboarding import OnboardingFlow, GoalAssessment
 from lib.analyzer import (
     ELEMENT_TYPES, ACTIONS,
     derive_system_model, classify_complexity, classify_reasoning_level,
-    score_tool, score_and_rank,
+    score_and_rank,
     generate_llm_decomposition_prompt, generate_llm_tool_selection_prompt,
 )
 from lib.discovery import build_index, get_index_stats, query_index, load_skill_registry
 from setup import WORKFLOW_TEMPLATES
 from lib.dispatch import (
-    MODELS, AGENT_ROUTING, QA_LEVEL_DOWN,
-    get_available_models, route_task_to_model,
+    AGENT_ROUTING, QA_LEVEL_DOWN,
+    get_available_models, route_task_to_model, get_configured_default_level,
     craft_worker_prompt, craft_qa_prompt, craft_researcher_prompt,
     craft_planner_prompt, craft_manager_prompt,
 )
 from lib.ledger import (
-    DEPARTMENTS, TASK_SIZES,
     create_project_ledger as _create_project_ledger,
     create_task as _create_task,
     get_task as _get_task,
@@ -111,11 +110,18 @@ class AppContext:
 async def lifespan(server):
     ctx = AppContext()
 
-    # Check first-run setup
+    # Check first-run setup and load config
     config_path = SERVER_DIR / "config.json"
     ctx.first_run = not config_path.exists()
+    _profile = ""
+    if config_path.exists():
+        try:
+            _cfg = json.loads(config_path.read_text())
+            _profile = _cfg.get("catalog_profile", "")
+        except Exception:
+            pass
 
-    ctx.index = build_index()
+    ctx.index = build_index(profile=_profile)
     # Load tool outcomes if available
     try:
         scores_json = _get_tool_scores(str(PROJECT_DIR))
@@ -358,8 +364,12 @@ def analyze_task(task: str, ctx: Context = None) -> str:
     # 2. Complexity
     complexity = classify_complexity(task, elements, actions, flows=flows)
 
-    # 3. Reasoning level
+    # 3. Reasoning level (use config default_level as floor)
     reasoning = classify_reasoning_level(task)
+    _level_order = {"haiku": 0, "sonnet": 1, "opus": 2}
+    _default = get_configured_default_level()
+    if _level_order.get(reasoning, 1) < _level_order.get(_default, 1):
+        reasoning = _default
 
     # 4. Tool matching
     matched_tools = []
@@ -916,7 +926,15 @@ def get_task(task_id: str) -> str:
     Args:
         task_id: Task ID (e.g. "ENG-001").
     """
-    return _get_task(str(PROJECT_DIR), task_id)
+    result_json = _get_task(str(PROJECT_DIR), task_id)
+    if result_json.startswith('{'):
+        try:
+            r = json.loads(result_json)
+            r["_summary"] = f"Task {task_id}: {r.get('error', 'loaded')}"
+            return json.dumps(r, indent=2)
+        except Exception:
+            pass
+    return result_json
 
 
 @mcp.tool()
@@ -927,7 +945,13 @@ def submit_worker_report(task_id: str, report: str) -> str:
         task_id: The task ID.
         report: Worker's completion report.
     """
-    return _submit_worker_report(str(PROJECT_DIR), task_id, report)
+    result_json = _submit_worker_report(str(PROJECT_DIR), task_id, report)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Worker report submitted for {task_id}."
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -939,7 +963,13 @@ def submit_qa_report(task_id: str, report: str, score: float) -> str:
         report: QA findings (PASS/FAIL per item).
         score: 0.0-1.0 (PASS / total).
     """
-    return _submit_qa_report(str(PROJECT_DIR), task_id, report, score)
+    result_json = _submit_qa_report(str(PROJECT_DIR), task_id, report, score)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"QA report submitted for {task_id}. Score: {score}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -953,7 +983,13 @@ def log_failure(task_id: str, check_name: str, expected: str, actual: str, sever
         actual: What was observed.
         severity: minor | major | critical.
     """
-    return _log_failure(str(PROJECT_DIR), task_id, check_name, expected, actual, severity)
+    result_json = _log_failure(str(PROJECT_DIR), task_id, check_name, expected, actual, severity)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Failure logged for {task_id}: {check_name} ({severity})"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -977,7 +1013,13 @@ def submit_manager_review(
             "error": "GATE_REJECTION: Call log_failure() before issuing REWORK.",
             "hint": "Record each failure first, then submit the review.",
         })
-    return _submit_manager_review(str(PROJECT_DIR), task_id, verdict, notes, rework_items)
+    result_json = _submit_manager_review(str(PROJECT_DIR), task_id, verdict, notes, rework_items)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Manager review for {task_id}: {verdict}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -987,7 +1029,14 @@ def get_unblocked_tasks(dept: str = "") -> str:
     Args:
         dept: Filter by department. Empty = all.
     """
-    return _get_unblocked_tasks(str(PROJECT_DIR), dept or None)
+    result_json = _get_unblocked_tasks(str(PROJECT_DIR), dept or None)
+    try:
+        r = json.loads(result_json)
+        tasks = r.get("tasks", [])
+        r["_summary"] = f"{len(tasks)} unblocked tasks ready." + (f" Dept: {dept}" if dept else "")
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -997,7 +1046,13 @@ def get_department_status(dept: str) -> str:
     Args:
         dept: Department name.
     """
-    return _get_department_status(str(PROJECT_DIR), dept)
+    result_json = _get_department_status(str(PROJECT_DIR), dept)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Department {dept} status loaded."
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -1008,7 +1063,13 @@ def get_outcomes(dept: str = "", verdict: str = "") -> str:
         dept: Filter by department.
         verdict: Filter by verdict.
     """
-    return _get_outcomes(str(PROJECT_DIR), dept, verdict)
+    result_json = _get_outcomes(str(PROJECT_DIR), dept, verdict)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Outcomes loaded." + (f" Dept: {dept}" if dept else "") + (f" Verdict: {verdict}" if verdict else "")
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1033,7 +1094,13 @@ def record_tool_outcome(
         success: Did it work?
         context: Additional context.
     """
-    return _record_tool_outcome(str(PROJECT_DIR), tool_name, task_id, action, success, context)
+    result_json = _record_tool_outcome(str(PROJECT_DIR), tool_name, task_id, action, success, context)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Tool outcome recorded: {tool_name} {'succeeded' if success else 'failed'} on {task_id}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -1043,7 +1110,13 @@ def get_tool_learning(tool_name: str = "") -> str:
     Args:
         tool_name: Filter to a specific tool. Empty = all.
     """
-    return _get_tool_scores(str(PROJECT_DIR), tool_name)
+    result_json = _get_tool_scores(str(PROJECT_DIR), tool_name)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Tool learning data loaded." + (f" Tool: {tool_name}" if tool_name else "")
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1068,7 +1141,13 @@ def record_architecture(
         wired: Whether it's connected in the boot path
         notes: Additional context
     """
-    return _record_architecture(str(PROJECT_DIR), component, module, status, wired, notes)
+    result_json = _record_architecture(str(PROJECT_DIR), component, module, status, wired, notes)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Architecture recorded: {component} ({status}, wired={wired})"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -1089,7 +1168,13 @@ def record_decision(
         alternatives: What was considered and rejected
         decided_by: Who made the call (user, planner, researcher)
     """
-    return _record_decision(str(PROJECT_DIR), question, decision, reasoning, alternatives, decided_by)
+    result_json = _record_decision(str(PROJECT_DIR), question, decision, reasoning, alternatives, decided_by)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Decision recorded: {question} — {decision}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -1107,7 +1192,13 @@ def update_project_state(
         value: The state (e.g. "PASSING", "FIXED", "DEPLOYED", "ADDED")
         notes: Context
     """
-    return _update_project_state(str(PROJECT_DIR), category, key, value, notes)
+    result_json = _update_project_state(str(PROJECT_DIR), category, key, value, notes)
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Project state updated: [{category}] {key} = {value}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 @mcp.tool()
@@ -1116,7 +1207,13 @@ def get_project_knowledge() -> str:
     decisions, recent state changes, and task summary. Use this to understand
     where the project stands.
     """
-    return _get_project_knowledge(str(PROJECT_DIR))
+    result_json = _get_project_knowledge(str(PROJECT_DIR))
+    try:
+        r = json.loads(result_json)
+        r["_summary"] = f"Project knowledge loaded. Goal: {str(r.get('goal', 'none'))[:80]}"
+        return json.dumps(r, indent=2)
+    except Exception:
+        return result_json
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1135,9 +1232,12 @@ async def dispatch_worker(task_id: str, reasoning_level: str = "", ctx: Context 
         await ctx.report_progress(0, 3, f"Loading task {task_id}...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
-        parsed = json.loads(task_content)
-        if "error" in parsed:
-            return task_content
+        try:
+            parsed = json.loads(task_content)
+            if "error" in parsed:
+                return task_content
+        except json.JSONDecodeError:
+            pass
     if ctx:
         await ctx.report_progress(1, 3, "Crafting worker prompt...")
     packet = craft_worker_prompt(task_id, task_content, str(PLAYBOOK_DIR), reasoning_level)
@@ -1165,9 +1265,12 @@ async def dispatch_qa(task_id: str, reasoning_level: str = "sonnet", ctx: Contex
         await ctx.report_progress(0, 3, f"Loading task {task_id} for QA review...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
-        parsed = json.loads(task_content)
-        if "error" in parsed:
-            return task_content
+        try:
+            parsed = json.loads(task_content)
+            if "error" in parsed:
+                return task_content
+        except json.JSONDecodeError:
+            pass
     parts = task_content.split("## Worker Report\n")
     worker_report = parts[1].split("\n## QA Report")[0] if len(parts) > 1 else "No worker report found"
     if ctx:
@@ -1194,9 +1297,12 @@ async def dispatch_researcher(task_id: str, ctx: Context = None) -> str:
         await ctx.report_progress(0, 2, f"Loading task {task_id} for research...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
-        parsed = json.loads(task_content)
-        if "error" in parsed:
-            return task_content
+        try:
+            parsed = json.loads(task_content)
+            if "error" in parsed:
+                return task_content
+        except json.JSONDecodeError:
+            pass
     goal = _get_project_goal(str(PROJECT_DIR))
     if ctx:
         await ctx.report_progress(1, 2, "Crafting researcher prompt...")
@@ -1222,9 +1328,12 @@ async def dispatch_planner(task_id: str, ctx: Context = None) -> str:
         await ctx.report_progress(0, 2, f"Loading task {task_id} for planning...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
-        parsed = json.loads(task_content)
-        if "error" in parsed:
-            return task_content
+        try:
+            parsed = json.loads(task_content)
+            if "error" in parsed:
+                return task_content
+        except json.JSONDecodeError:
+            pass
     goal = _get_project_goal(str(PROJECT_DIR))
     if ctx:
         await ctx.report_progress(1, 2, "Crafting planner prompt...")
@@ -1251,9 +1360,12 @@ async def dispatch_manager(task_id: str, rework_count: int = 0, ctx: Context = N
         await ctx.report_progress(0, 2, f"Loading task {task_id} for manager review...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
-        parsed = json.loads(task_content)
-        if "error" in parsed:
-            return task_content
+        try:
+            parsed = json.loads(task_content)
+            if "error" in parsed:
+                return task_content
+        except json.JSONDecodeError:
+            pass
     parts = task_content.split("## Worker Report\n")
     worker_report = parts[1].split("\n## QA Report")[0] if len(parts) > 1 else ""
     parts2 = task_content.split("## QA Report")
@@ -1721,9 +1833,7 @@ def get_workflows(workflow: str = "") -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 
 from orchestrator_loop import (
-    run_task_pipeline,
     _step_researcher, _step_planner, _step_worker, _step_qa, _step_manager,
-    _extract_qa_score, _extract_verdict,
 )
 
 
@@ -1747,7 +1857,10 @@ async def execute_pipeline(task_id: str, ctx: Context = None) -> str:
     import re as _re
 
     task_content = _get_task(str(PROJECT_DIR), task_id)
-    parsed = json.loads(task_content) if task_content.startswith("{") else None
+    try:
+        parsed = json.loads(task_content) if task_content.startswith("{") else None
+    except json.JSONDecodeError:
+        parsed = None
     if parsed and "error" in parsed:
         return task_content
 
@@ -1761,6 +1874,10 @@ async def execute_pipeline(task_id: str, ctx: Context = None) -> str:
     model = derive_system_model(description)
     complexity = classify_complexity(description, model["elements"], model["actions"], flows=model["flows"])
     reasoning = classify_reasoning_level(description)
+    _default = get_configured_default_level()
+    _lvl = {"haiku": 0, "sonnet": 1, "opus": 2}
+    if _lvl.get(reasoning, 1) < _lvl.get(_default, 1):
+        reasoning = _default
 
     if ctx:
         await ctx.report_progress(0, 6, f"Task {task_id}: {complexity} complexity, {reasoning} reasoning")

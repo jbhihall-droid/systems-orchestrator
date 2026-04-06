@@ -12,10 +12,7 @@ Sources:
 from __future__ import annotations
 
 import json
-import os
-import re
 import shutil
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -237,6 +234,15 @@ VSCODE_MCP_TOOLS = {
 
 # ── Index Builder ────────────────────────────────────────────────────────
 
+def _excluded_prefixes_for_profile(profile: str) -> list[str]:
+    """Return category prefixes to exclude based on catalog profile."""
+    if profile == "development":
+        return ["security/"]
+    elif profile == "security":
+        return ["development/frontend", "development/backend"]
+    return []  # "full" or empty = include everything
+
+
 def build_index(
     catalog_path: Path | None = None,
     skills_dir: Path | None = None,
@@ -246,8 +252,13 @@ def build_index(
     include_native: bool = True,
     include_live_mcp: bool = True,
     include_skill_registry: bool = True,
+    profile: str = "",
 ) -> list[dict[str, Any]]:
     """Build the unified tool index from all sources.
+
+    Args:
+        profile: Catalog profile filter — "full" (all), "development" (exclude security),
+                 "security" (exclude frontend/backend). Empty = full.
 
     Sources (in order):
     1. Tool catalog JSON (CLI tools, MCP tools, workflows)
@@ -261,14 +272,20 @@ def build_index(
     """
     index: list[dict[str, Any]] = []
     seen_names: set[str] = set()
+    excluded = _excluded_prefixes_for_profile(profile)
 
     def _add(entry: dict) -> None:
         """Add entry, deduplicating by name (first source wins).
-        Also checks installed status for CLI tools."""
+        Also checks installed status and applies profile filtering."""
         name = entry.get("name", "")
         # Normalize categories to use hierarchical form
         if "categories" in entry:
             entry["categories"] = [_normalize_category(c) for c in entry["categories"]]
+        # Profile filtering: skip if ALL categories match excluded prefixes
+        if excluded:
+            cats = entry.get("categories", [])
+            if cats and all(any(c.startswith(ex) for ex in excluded) for c in cats):
+                return  # filtered out by profile
         # Check installed status for CLI tools from catalog
         if entry.get("type") == "cli" and "installed" not in entry:
             binary = entry.get("binary", name)

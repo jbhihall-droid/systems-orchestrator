@@ -18,7 +18,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import datetime
 import json
 import re
 import sys
