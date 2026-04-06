@@ -41,6 +41,7 @@ from lib.analyzer import (
     generate_llm_decomposition_prompt, generate_llm_tool_selection_prompt,
 )
 from lib.discovery import build_index, get_index_stats, query_index, load_skill_registry
+from setup import WORKFLOW_TEMPLATES
 from lib.dispatch import (
     MODELS, AGENT_ROUTING, QA_LEVEL_DOWN,
     get_available_models, route_task_to_model,
@@ -467,6 +468,50 @@ def analyze_task(task: str, ctx: Context = None) -> str:
 
     # Sort by sequence_order so the caller knows the execution order
     result["recommended_skills"].sort(key=lambda x: x.get("sequence_order", 99))
+
+    # ── Workflow matching ──────────────────────────────────────────────
+    # Score each workflow template against the task using trigger phrases
+    workflow_scores: list[tuple[float, str, dict]] = []
+    for wf_key, wf in WORKFLOW_TEMPLATES.items():
+        triggers = wf.get("triggers", [])
+        if not triggers:
+            continue
+        score = 0.0
+        matched_triggers = []
+        for trigger in triggers:
+            if trigger in task_lower:
+                score += 3.0  # exact phrase match
+                matched_triggers.append(trigger)
+            elif any(w in task_lower for w in trigger.split()):
+                score += 1.0  # partial word match
+        if score > 0:
+            workflow_scores.append((score, wf_key, {
+                "workflow": wf_key,
+                "label": wf["label"],
+                "description": wf["description"],
+                "score": score,
+                "matched_triggers": matched_triggers,
+                "steps": " → ".join(s["name"] for s in wf["steps"]),
+            }))
+
+    workflow_scores.sort(key=lambda x: -x[0])
+    if workflow_scores:
+        result["recommended_workflow"] = workflow_scores[0][2]
+        if len(workflow_scores) > 1:
+            result["alternative_workflows"] = [ws[2] for ws in workflow_scores[1:3]]
+        # Override action_required with the matched workflow's steps
+        best_wf = WORKFLOW_TEMPLATES[workflow_scores[0][1]]
+        result["action_required"] = [
+            {"step": i + 1, "instruction": s["description"], "invoke": s["invoke"], "phase": s["name"]}
+            for i, s in enumerate(best_wf["steps"])
+        ]
+        # Update summary with workflow info
+        result["_summary"] = (
+            f"Task classified as {complexity} complexity. "
+            f"Best workflow: {workflow_scores[0][2]['label']} ({workflow_scores[0][2]['steps']}). "
+            f"Matched on: {', '.join(workflow_scores[0][2]['matched_triggers']) or 'keyword overlap'}. "
+            f"Top tools: {', '.join(t['tool'] for t in matched_tools[:3])}."
+        )
 
     # LLM decomposition prompt for FULL complexity tasks
     if complexity == "FULL":
