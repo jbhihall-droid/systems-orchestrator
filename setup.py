@@ -241,7 +241,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/senior-security", "/senior-secops"],
-        "triggers": ["security audit", "vulnerability", "pentest", "threat model", "owasp", "cve"],
+        "triggers": ["security audit", "vulnerability", "pentest", "threat model", "owasp", "cve", "security vulnerabilities", "audit our", "before we go to production"],
     },
     "code-review": {
         "label": "Code Review",
@@ -281,6 +281,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/spec-driven-workflow", "/writing-plans"],
+        "triggers": ["build api", "api endpoint", "rest api", "graphql api", "api spec"],
     },
     "refactor": {
         "label": "Refactoring",
@@ -295,6 +296,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/simplify"],
+        "triggers": ["refactor", "restructure", "clean up code", "improve code", "reorganize"],
     },
     "tdd-cycle": {
         "label": "Test-Driven Development",
@@ -308,6 +310,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/test-driven-development", "/spec-driven-workflow"],
+        "triggers": ["test driven", "tdd", "red green refactor", "write test first"],
     },
     "frontend-build": {
         "label": "Frontend Build",
@@ -321,6 +324,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/frontend-design:frontend-design"],
+        "triggers": ["frontend", "react component", "vue component", "svelte", "build component"],
     },
     "parallel-compete": {
         "label": "Parallel Competition",
@@ -333,6 +337,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/brainstorming", "/agenthub"],
+        "triggers": ["try multiple", "compete", "parallel approaches", "which is better approach"],
     },
     # ── Infrastructure Workflows ─────────────────────────────────────
     "docker-deploy": {
@@ -347,6 +352,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/docker-development:docker-development"],
+        "triggers": ["containerize", "docker compose", "dockerfile", "dockerize", "deploy container"],
     },
     "ci-cd-setup": {
         "label": "CI/CD Pipeline",
@@ -360,6 +366,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:ci-cd-pipeline-builder"],
+        "triggers": ["ci/cd", "ci cd", "github actions", "gitlab ci", "pipeline setup", "continuous integration"],
     },
     "database-migration": {
         "label": "Database Migration",
@@ -372,6 +379,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:migration-architect"],
+        "triggers": ["database migration", "schema change", "migrate database", "add column"],
     },
     # ── Quality Workflows ────────────────────────────────────────────
     "tech-debt-cleanup": {
@@ -386,6 +394,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:tech-debt-tracker", "/context-engineering:kaizen"],
+        "triggers": ["tech debt", "code quality", "clean up", "legacy code", "reduce complexity"],
     },
     "performance-fix": {
         "label": "Performance Optimization",
@@ -399,6 +408,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": ["sequential-thinking"],
         "requires_skills": ["/engineering-skills:performance-profiler"],
+        "triggers": ["slow", "performance", "optimize speed", "bottleneck", "latency", "profiling"],
     },
     "dependency-update": {
         "label": "Dependency Update",
@@ -412,6 +422,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:dependency-auditor"],
+        "triggers": ["update dependencies", "outdated packages", "upgrade packages", "npm audit", "CVE"],
     },
     # ── Security Workflows ───────────────────────────────────────────
     "incident-response": {
@@ -426,6 +437,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/incident-response", "/threat-detection"],
+        "triggers": ["incident", "outage", "production down", "SEV1", "pages going off"],
     },
     "red-team-engagement": {
         "label": "Red Team Engagement",
@@ -438,6 +450,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/red-team", "/senior-security", "/ciso-advisor"],
+        "triggers": ["red team", "penetration test", "pentest", "attack surface", "offensive security"],
     },
     "secure-web-app": {
         "label": "Secure Web Application",
@@ -451,6 +464,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/vibesec", "/senior-security"],
+        "triggers": ["secure web app", "owasp", "web security", "secure application"],
     },
     # ── Release & Ops Workflows ──────────────────────────────────────
     "release": {
@@ -464,6 +478,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:release-manager"],
+        "triggers": ["release", "ship it", "deploy to production", "version bump", "changelog"],
     },
     "monorepo-change": {
         "label": "Monorepo Change",
@@ -477,6 +492,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/engineering-skills:monorepo-navigator"],
+        "triggers": ["monorepo", "workspace", "turborepo", "nx workspace", "package boundaries"],
     },
     # ── AI / Prompt / Agent Workflows ────────────────────────────────
     "build-agent": {
@@ -491,6 +507,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/senior-prompt-engineer", "/plugin-dev:agent-development"],
+        "triggers": ["build agent", "create agent", "make an agent", "ai agent", "autonomous agent"],
     },
     "prompt-optimization": {
         "label": "Prompt Optimization",
@@ -503,6 +520,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/senior-prompt-engineer", "/autoresearch-agent"],
+        "triggers": ["optimize prompt", "improve prompt", "prompt engineering", "prompt template"],
     },
     "build-plugin": {
         "label": "Build CC Plugin",
@@ -516,6 +534,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/plugin-dev:create-plugin"],
+        "triggers": ["build plugin", "create plugin", "claude code plugin", "make a plugin"],
     },
     # ── Documentation & Knowledge ────────────────────────────────────
     "reverse-engineer": {
@@ -530,6 +549,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/code-to-prd:code-to-prd"],
+        "triggers": ["reverse engineer", "understand codebase", "how does this work", "inherited codebase"],
     },
     "self-improve": {
         "label": "Self-Improve Claude Setup",
@@ -543,6 +563,7 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/self-improving-agent:self-improving-agent"],
+        "triggers": ["improve setup", "optimize claude", "improve claude config", "self improve"],
     },
     # ── Documentation & Ops Workflows ───────────────────────────────
     "write-docs": {

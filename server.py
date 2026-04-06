@@ -2382,7 +2382,7 @@ Reply with just the key (e.g. "automation" or "bug-fix"), or "none" if no workfl
 
     try:
         r = subprocess.run(
-            [claude_bin, "-p", "--model", "haiku"],
+            [claude_bin, "-p", "--model", "sonnet"],
             input=prompt,
             capture_output=True,
             text=True,
