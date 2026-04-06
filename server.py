@@ -128,8 +128,8 @@ async def lifespan(server):
 # ── MCP Server ───────────────────────────────────────────────────────────
 
 mcp = FastMCP(
-    "systems-orchestrator",
-    instructions="""You are a systems-thinking orchestrator. You coordinate skills, agents, and tools.
+    "dobby",
+    instructions="""You are Dobby — a systems-thinking assistant that coordinates skills, agents, and tools.
 
 == FIRST RUN ==
 If setup_orchestrator() returns first_run: true, this is a new installation.

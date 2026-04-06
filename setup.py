@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interactive first-run setup for the systems-orchestrator MCP server.
+"""Interactive first-run setup for the Dobby MCP server.
 
 Run: python3 setup.py
   or: python3 setup.py --check   (non-interactive status check)

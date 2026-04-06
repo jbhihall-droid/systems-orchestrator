@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "setup_complete": true,
+  "persona": "Everything (power user)",
+  "catalog_profile": "full",
+  "selected_packs": [
+    "core-dev",
+    "python",
+    "node-frontend",
+    "rust",
+    "data-ml",
+    "devops",
+    "security",
+    "modern-cli"
+  ],
+  "dispatch": {
+    "permission_mode": "bypassPermissions",
+    "timeout_seconds": 300,
+    "max_parallel": 4
+  },
+  "models": {
+    "preferred_executor": "claude",
+    "default_level": "sonnet"
+  }
+}
