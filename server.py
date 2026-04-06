@@ -136,8 +136,11 @@ If setup_orchestrator() returns first_run: true, this is a new installation.
 You MUST call setup_orchestrator() immediately and walk the user through setup:
 1. Show them the persona options and ask which fits
 2. Call configure_orchestrator() with their choice
-3. Show what tools are missing and ask if they want to install them
+3. Show what CLI tools are missing and ask if they want to install them
 4. Call install_tools() with the tools they approve
+5. Show what MCP servers are missing and ask if they want to install them
+6. Call install_mcp_servers() with the servers they approve
+7. Show available workflows with get_workflows()
 Do NOT skip setup. Do NOT proceed to other tools until setup is complete.
 
 == HOW TO USE THIS MCP SERVER ==
@@ -158,6 +161,8 @@ summarize what you learned from the response. Specifically:
 - get_project_knowledge() → Summarize the project state for the user
 - suggest_packages() → Show package options the user can install
 - impact_analysis() → Present the assessment structure to fill in
+- install_mcp_servers() → Show which MCP servers were installed, remind to restart CC
+- get_workflows() → Show workflow steps clearly, guide user through each step
 
 When a response contains "action_required" steps, walk the user through them.
 When a response contains "matched_tools", explain which tools are relevant and why.
@@ -172,6 +177,9 @@ When a response contains "hint" or "_hint", follow that guidance.
 - User asks about system state → system_snapshot()
 - User asks if a tool is installed → health_check()
 - User wants to know about AI models → model_status()
+- User wants to install MCP servers → install_mcp_servers()
+- User asks about workflows or "how do I..." → get_workflows()
+- User says "build a feature" → get_workflows(workflow="feature-dev") then guide them
 
 == WORKFLOW PATTERNS ==
 
@@ -1205,10 +1213,11 @@ def systems_analysis() -> str:
 # SETUP TOOLS — First-run onboarding via MCP
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Import setup module for tool packs and install recipes
+# Import setup module for tool packs, MCP packs, workflows, and install recipes
 from setup import (
-    TOOL_PACKS, PERSONA_SUGGESTIONS, INSTALL_RECIPES,
-    detect_package_manager, get_install_cmd, load_config, CONFIG_PATH,
+    TOOL_PACKS, MCP_PACKS, WORKFLOW_TEMPLATES, PERSONA_SUGGESTIONS, INSTALL_RECIPES,
+    detect_package_manager, get_install_cmd, install_mcp_server, get_installed_mcp_servers,
+    load_config, CONFIG_PATH,
 )
 
 
@@ -1337,7 +1346,7 @@ async def configure_orchestrator(
 
     CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n")
 
-    # Calculate what needs installing
+    # Calculate what CLI tools need installing
     missing_tools = []
     for pack_key in selected_packs:
         pack = TOOL_PACKS.get(pack_key, {})
@@ -1355,29 +1364,48 @@ async def configure_orchestrator(
         else:
             manual.append(tool)
 
+    # Check which MCP servers need installing
+    mcp_pack_names = suggestion.get("mcp_packs", [])
+    installed_mcps = get_installed_mcp_servers()
+    missing_mcps = {}
+    for mp in mcp_pack_names:
+        mpack = MCP_PACKS.get(mp, {})
+        for sname in mpack.get("servers", {}):
+            if sname not in installed_mcps:
+                missing_mcps[sname] = mp
+
+    # Get recommended workflows
+    workflow_names = suggestion.get("workflows", [])
+    workflows = {k: WORKFLOW_TEMPLATES[k]["label"] for k in workflow_names if k in WORKFLOW_TEMPLATES}
+
     _summary = (
         f"Configured as '{suggestion['label']}' with packs: {', '.join(selected_packs)}. "
         f"Permission mode: {permission_mode}, reasoning: {reasoning_level}. "
-        + (f"{len(missing_tools)} tools need installing ({len(installable)} auto-installable). "
-           if missing_tools else "All tools already installed! ")
-        + ("Call install_tools() to install the missing ones." if installable else "")
+        + (f"{len(missing_tools)} CLI tools need installing. " if missing_tools else "All CLI tools installed. ")
+        + (f"{len(missing_mcps)} MCP servers need installing. " if missing_mcps else "All MCP servers configured. ")
+        + f"{len(workflows)} workflows available."
     )
+
+    next_steps = []
+    if installable:
+        next_steps.append(f"1. Call install_tools(tools={[t['tool'] for t in installable]}) for CLI tools")
+    if missing_mcps:
+        next_steps.append(f"{'2' if installable else '1'}. Call install_mcp_servers(servers={list(missing_mcps.keys())}) for MCP servers")
+    if not next_steps:
+        next_steps.append("Setup complete! Try get_workflows() to see available workflow patterns.")
 
     return json.dumps({
         "_summary": _summary,
         "config_saved": True,
         "persona": suggestion["label"],
         "selected_packs": selected_packs,
-        "missing_tools": missing_tools,
+        "missing_cli_tools": missing_tools,
         "installable": installable,
         "manual_install": manual,
-        "_next_step": (
-            "Show the user the missing tools list and ask which they want to install. "
-            "Then call install_tools(tools=[...]) with their approved list. "
-            "For manual installs, show the user the tool names and let them handle it."
-            if missing_tools else
-            "Setup complete! The orchestrator is ready to use."
-        ),
+        "missing_mcp_servers": missing_mcps,
+        "mcp_packs": mcp_pack_names,
+        "workflows": workflows,
+        "_next_step": "\n".join(next_steps),
     }, indent=2)
 
 
@@ -1453,6 +1481,136 @@ async def install_tools(tools: list[str], ctx: Context = None) -> str:
         "results": results,
         "installed": installed_count,
         "failed": failed_count,
+    }, indent=2)
+
+
+@mcp.tool()
+async def install_mcp_servers(servers: list[str] | None = None, pack: str = "", ctx: Context = None) -> str:
+    """Install MCP servers via `claude mcp add`.
+
+    Either specify individual server names or a pack name.
+    Installs into ~/.mcp.json so they're available on next CC restart.
+
+    Args:
+        servers: Individual server names (e.g. ["sequential-thinking", "memory"])
+        pack: MCP pack name (e.g. "core-mcp", "dev-mcp", "data-mcp")
+    """
+    already_installed = get_installed_mcp_servers()
+    to_install: dict[str, dict] = {}
+
+    if pack and pack in MCP_PACKS:
+        for name, config in MCP_PACKS[pack]["servers"].items():
+            if name not in already_installed:
+                to_install[name] = config
+    elif servers:
+        # Find server configs from all packs
+        all_servers = {}
+        for p in MCP_PACKS.values():
+            all_servers.update(p.get("servers", {}))
+        for name in servers:
+            if name in all_servers and name not in already_installed:
+                to_install[name] = all_servers[name]
+            elif name in already_installed:
+                pass  # already installed
+            else:
+                to_install[name] = {"command": "npx", "args": ["-y", f"@modelcontextprotocol/server-{name}"]}
+    else:
+        # List available packs
+        packs_info = {}
+        for pk, pv in MCP_PACKS.items():
+            server_names = list(pv["servers"].keys())
+            packs_info[pk] = {
+                "label": pv["label"],
+                "description": pv["description"],
+                "servers": server_names,
+                "installed": [s for s in server_names if s in already_installed],
+                "missing": [s for s in server_names if s not in already_installed],
+            }
+        return json.dumps({
+            "_summary": f"Available MCP packs. {len(already_installed)} servers already configured. Specify pack= or servers= to install.",
+            "packs": packs_info,
+            "currently_installed": sorted(already_installed),
+        }, indent=2)
+
+    if not to_install:
+        return json.dumps({
+            "_summary": "All requested MCP servers are already installed.",
+            "already_installed": sorted(already_installed),
+        }, indent=2)
+
+    results = []
+    total = len(to_install)
+    installed_count = 0
+
+    for i, (name, config) in enumerate(to_install.items()):
+        if ctx:
+            await ctx.report_progress(i, total, f"Installing MCP server: {name}...")
+        success, msg = install_mcp_server(name, config)
+        results.append({"server": name, "success": success, "message": msg})
+        if success:
+            installed_count += 1
+        if ctx:
+            icon = "✓" if success else "✗"
+            await ctx.report_progress(i + 1, total, f"{icon} {name}: {msg}")
+
+    _summary = (
+        f"Installed {installed_count}/{total} MCP servers. "
+        + ("Restart Claude Code (Ctrl+Shift+P → Reload Window) to activate them." if installed_count > 0 else "")
+    )
+    return json.dumps({
+        "_summary": _summary,
+        "results": results,
+        "installed": installed_count,
+        "restart_required": installed_count > 0,
+    }, indent=2)
+
+
+@mcp.tool()
+def get_workflows(workflow: str = "") -> str:
+    """Get available workflow templates or details for a specific workflow.
+
+    Workflows are step-by-step patterns for common tasks.
+    Follow the steps in order — each step tells you what to invoke.
+
+    Args:
+        workflow: Specific workflow name (e.g. "feature-dev"). Empty = list all.
+    """
+    if workflow and workflow in WORKFLOW_TEMPLATES:
+        wf = WORKFLOW_TEMPLATES[workflow]
+        steps_text = "\n".join(
+            f"  {i+1}. [{s['name']}] {s['invoke']} — {s['description']}"
+            for i, s in enumerate(wf["steps"])
+        )
+        _summary = (
+            f"Workflow: {wf['label']}\n{wf['description']}\n\n"
+            f"Steps:\n{steps_text}\n\n"
+            + (f"Requires MCP: {', '.join(wf['requires_mcp'])}\n" if wf['requires_mcp'] else "")
+            + (f"Requires skills: {', '.join(wf['requires_skills'])}" if wf['requires_skills'] else "")
+        )
+        return json.dumps({
+            "_summary": _summary,
+            "workflow": workflow,
+            **wf,
+        }, indent=2)
+
+    # List all workflows
+    listing = {}
+    for key, wf in WORKFLOW_TEMPLATES.items():
+        listing[key] = {
+            "label": wf["label"],
+            "description": wf["description"],
+            "step_count": len(wf["steps"]),
+            "steps_preview": " → ".join(s["name"] for s in wf["steps"]),
+        }
+
+    _summary = (
+        f"{len(WORKFLOW_TEMPLATES)} workflows available:\n"
+        + "\n".join(f"  {k}: {v['steps_preview']}" for k, v in listing.items())
+        + "\n\nCall get_workflows(workflow='name') for full details."
+    )
+    return json.dumps({
+        "_summary": _summary,
+        "workflows": listing,
     }, indent=2)
 
 

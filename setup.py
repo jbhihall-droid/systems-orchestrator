@@ -87,47 +87,188 @@ TOOL_PACKS = {
     },
 }
 
+# ── MCP Server Packs ────────────────────────────────────────────────────
+# MCP servers installed via `claude mcp add`
+
+MCP_PACKS = {
+    "core-mcp": {
+        "label": "Core MCP Servers",
+        "description": "Essential MCP servers for reasoning and development",
+        "servers": {
+            "sequential-thinking": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+            },
+            "fetch": {
+                "command": "uvx",
+                "args": ["mcp-server-fetch"],
+            },
+            "memory": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-memory"],
+            },
+        },
+    },
+    "dev-mcp": {
+        "label": "Development MCP Servers",
+        "description": "Git, filesystem, code intelligence",
+        "servers": {
+            "context7": {
+                "command": "npx",
+                "args": ["-y", "@upstash/context7-mcp@latest"],
+            },
+        },
+    },
+    "data-mcp": {
+        "label": "Data MCP Servers",
+        "description": "Database access and Python execution",
+        "servers": {
+            "sqlite": {
+                "command": "uvx",
+                "args": ["mcp-server-sqlite", "--db-path", "~/.local/share/dobby/memory.db"],
+            },
+            "run-python": {
+                "command": "uvx",
+                "args": ["mcp-run-python"],
+            },
+        },
+    },
+    "security-mcp": {
+        "label": "Security MCP Servers",
+        "description": "Security scanning and threat intelligence",
+        "servers": {
+            "semgrep": {
+                "command": "semgrep",
+                "args": ["mcp"],
+                "requires_cli": "semgrep",
+            },
+        },
+    },
+}
+
+# ── Workflow Templates ───────────────────────────────────────────────────
+# Common workflow chains that Dobby can guide users through
+
+WORKFLOW_TEMPLATES = {
+    "feature-dev": {
+        "label": "Feature Development",
+        "description": "Full feature lifecycle: think → plan → build → verify",
+        "steps": [
+            {"name": "Think", "invoke": "sequential-thinking MCP or /brainstorming", "description": "Explore approaches, consider tradeoffs"},
+            {"name": "Plan", "invoke": "/writing-plans", "description": "Turn design into implementation steps"},
+            {"name": "Build", "invoke": "/subagent-driven-development", "description": "Execute plan task-by-task with review"},
+            {"name": "Verify", "invoke": "/verification-before-completion", "description": "Run tests, verify output"},
+            {"name": "Ship", "invoke": "/finishing-a-development-branch", "description": "Merge, PR, cleanup"},
+        ],
+        "requires_mcp": ["sequential-thinking"],
+        "requires_skills": ["/brainstorming", "/writing-plans", "/subagent-driven-development"],
+    },
+    "bug-fix": {
+        "label": "Bug Fix",
+        "description": "Diagnose → test → fix → verify",
+        "steps": [
+            {"name": "Diagnose", "invoke": "/systematic-debugging", "description": "Find root cause before touching code"},
+            {"name": "Test", "invoke": "/test-driven-development", "description": "Write failing test that reproduces bug"},
+            {"name": "Fix", "invoke": "implement the fix", "description": "Make the test pass"},
+            {"name": "Verify", "invoke": "/verification-before-completion", "description": "Ensure fix doesn't break anything"},
+        ],
+        "requires_mcp": [],
+        "requires_skills": ["/systematic-debugging", "/test-driven-development"],
+    },
+    "security-audit": {
+        "label": "Security Audit",
+        "description": "Threat model → scan → review → remediate",
+        "steps": [
+            {"name": "Threat Model", "invoke": "/senior-security", "description": "STRIDE analysis, identify attack surface"},
+            {"name": "Scan", "invoke": "/senior-secops", "description": "SAST/DAST scan, CVE check"},
+            {"name": "Review", "invoke": "/trailofbits:differential-review", "description": "Security-focused code review"},
+            {"name": "Remediate", "invoke": "/engineering-skills:focused-fix", "description": "Fix vulnerabilities found"},
+        ],
+        "requires_mcp": [],
+        "requires_skills": ["/senior-security", "/senior-secops"],
+    },
+    "code-review": {
+        "label": "Code Review",
+        "description": "Multi-angle review: quality → security → second opinion",
+        "steps": [
+            {"name": "Quality", "invoke": "/hex-tools:code-auditor", "description": "Style, maintainability, correctness"},
+            {"name": "Security", "invoke": "/trailofbits:differential-review", "description": "Security implications of changes"},
+            {"name": "Tests", "invoke": "/trailofbits:mutation-testing", "description": "Are the tests actually good?"},
+            {"name": "Second Opinion", "invoke": "/trailofbits:second-opinion", "description": "Independent external review"},
+        ],
+        "requires_mcp": [],
+        "requires_skills": [],
+    },
+    "quick-task": {
+        "label": "Quick Task",
+        "description": "Think briefly → do it → verify",
+        "steps": [
+            {"name": "Think", "invoke": "sequential-thinking MCP", "description": "Brief analysis of approach"},
+            {"name": "Do", "invoke": "execute directly", "description": "Implement the change"},
+            {"name": "Verify", "invoke": "/verification-before-completion", "description": "Quick sanity check"},
+        ],
+        "requires_mcp": ["sequential-thinking"],
+        "requires_skills": [],
+    },
+}
+
 # ── Persona → Pack Suggestions ──────────────────────────────────────────
 
 PERSONA_SUGGESTIONS = {
     "fullstack": {
         "label": "Full-Stack Developer",
         "packs": ["core-dev", "python", "node-frontend", "devops"],
+        "mcp_packs": ["core-mcp", "dev-mcp"],
+        "workflows": ["feature-dev", "bug-fix", "quick-task"],
         "profile": "development",
     },
     "backend": {
         "label": "Backend Developer",
         "packs": ["core-dev", "python", "devops", "data-ml"],
+        "mcp_packs": ["core-mcp", "dev-mcp", "data-mcp"],
+        "workflows": ["feature-dev", "bug-fix", "quick-task"],
         "profile": "development",
     },
     "frontend": {
         "label": "Frontend Developer",
         "packs": ["core-dev", "node-frontend", "modern-cli"],
+        "mcp_packs": ["core-mcp", "dev-mcp"],
+        "workflows": ["feature-dev", "quick-task"],
         "profile": "development",
     },
     "data": {
         "label": "Data Scientist / ML Engineer",
         "packs": ["core-dev", "python", "data-ml"],
+        "mcp_packs": ["core-mcp", "data-mcp"],
+        "workflows": ["feature-dev", "quick-task"],
         "profile": "development",
     },
     "devops": {
         "label": "DevOps / SRE / Platform Engineer",
         "packs": ["core-dev", "devops", "security", "modern-cli"],
+        "mcp_packs": ["core-mcp", "dev-mcp"],
+        "workflows": ["feature-dev", "security-audit", "quick-task"],
         "profile": "full",
     },
     "security": {
         "label": "Security Engineer / Pentester",
         "packs": ["core-dev", "security", "devops"],
+        "mcp_packs": ["core-mcp", "security-mcp"],
+        "workflows": ["security-audit", "bug-fix", "quick-task"],
         "profile": "security",
     },
     "student": {
         "label": "Student / Learning",
         "packs": ["core-dev", "python"],
+        "mcp_packs": ["core-mcp"],
+        "workflows": ["quick-task", "bug-fix"],
         "profile": "development",
     },
     "everything": {
         "label": "Everything (power user)",
         "packs": ["core-dev", "python", "node-frontend", "rust", "data-ml", "devops", "security", "modern-cli"],
+        "mcp_packs": ["core-mcp", "dev-mcp", "data-mcp", "security-mcp"],
+        "workflows": ["feature-dev", "bug-fix", "security-audit", "code-review", "quick-task"],
         "profile": "full",
     },
 }
@@ -212,6 +353,45 @@ def get_install_cmd(tool: str, pm: str) -> str | None:
     if recipe.get("cargo") and shutil.which("cargo"):
         return f"cargo install {recipe['cargo']}"
     return None
+
+
+def install_mcp_server(name: str, server_config: dict) -> tuple[bool, str]:
+    """Install an MCP server via claude mcp add. Returns (success, message)."""
+    # Check if prereq CLI is needed
+    requires = server_config.get("requires_cli")
+    if requires and not shutil.which(requires):
+        return False, f"requires {requires} CLI (not installed)"
+
+    claude_bin = shutil.which("claude")
+    if not claude_bin:
+        return False, "claude CLI not found"
+
+    # Build: claude mcp add <name> -- <command> <args...>
+    command = server_config["command"]
+    args = server_config.get("args", [])
+    cmd = [claude_bin, "mcp", "add", name, "--", command] + args
+
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if r.returncode == 0:
+            return True, "installed"
+        return False, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "failed"
+    except subprocess.TimeoutExpired:
+        return False, "timed out"
+    except Exception as e:
+        return False, str(e)
+
+
+def get_installed_mcp_servers() -> set[str]:
+    """Get names of currently configured MCP servers from ~/.mcp.json."""
+    mcp_path = Path.home() / ".mcp.json"
+    if not mcp_path.exists():
+        return set()
+    try:
+        data = json.loads(mcp_path.read_text())
+        return set(data.get("mcpServers", {}).keys())
+    except (json.JSONDecodeError, KeyError):
+        return set()
 
 
 def print_header(text: str):
