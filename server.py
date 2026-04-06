@@ -470,7 +470,10 @@ def analyze_task(task: str, ctx: Context = None) -> str:
     result["recommended_skills"].sort(key=lambda x: x.get("sequence_order", 99))
 
     # ── Workflow matching ──────────────────────────────────────────────
-    # Score each workflow template against the task using trigger phrases
+    # Score each workflow template against the task using trigger phrases.
+    # Only exact phrase matches count — no partial word matching to avoid
+    # false positives from generic words like "page", "create", "app".
+    task_words = set(task_lower.split())
     workflow_scores: list[tuple[float, str, dict]] = []
     for wf_key, wf in WORKFLOW_TEMPLATES.items():
         triggers = wf.get("triggers", [])
@@ -480,10 +483,9 @@ def analyze_task(task: str, ctx: Context = None) -> str:
         matched_triggers = []
         for trigger in triggers:
             if trigger in task_lower:
-                score += 3.0  # exact phrase match
+                # Exact phrase match — high confidence
+                score += 3.0
                 matched_triggers.append(trigger)
-            elif any(w in task_lower for w in trigger.split()):
-                score += 1.0  # partial word match
         if score > 0:
             workflow_scores.append((score, wf_key, {
                 "workflow": wf_key,
@@ -495,12 +497,40 @@ def analyze_task(task: str, ctx: Context = None) -> str:
             }))
 
     workflow_scores.sort(key=lambda x: -x[0])
-    if workflow_scores:
-        result["recommended_workflow"] = workflow_scores[0][2]
-        if len(workflow_scores) > 1:
-            result["alternative_workflows"] = [ws[2] for ws in workflow_scores[1:3]]
+
+    # LLM selects the best workflow — understands intent better than keywords.
+    # Trigger matches are used as a hint but LLM has final say.
+    best_wf_key = None
+    best_wf_info = None
+
+    llm_pick = _llm_select_workflow(task)
+    if llm_pick and llm_pick in WORKFLOW_TEMPLATES:
+        wf = WORKFLOW_TEMPLATES[llm_pick]
+        best_wf_key = llm_pick
+        # Check if triggers also matched this pick
+        trigger_match = [ws[2]["matched_triggers"] for ws in workflow_scores if ws[1] == llm_pick]
+        matched_on = trigger_match[0] if trigger_match else []
+        best_wf_info = {
+            "workflow": llm_pick,
+            "label": wf["label"],
+            "description": wf["description"],
+            "score": 10.0,
+            "matched_triggers": matched_on or ["(LLM-selected)"],
+            "steps": " → ".join(s["name"] for s in wf["steps"]),
+        }
+    elif workflow_scores:
+        # Fallback to trigger matching if LLM unavailable
+        best_wf_key = workflow_scores[0][1]
+        best_wf_info = workflow_scores[0][2]
+
+    if best_wf_key and best_wf_info:
+        result["recommended_workflow"] = best_wf_info
+        # Add alternatives from trigger matching (excluding the pick)
+        alts = [ws[2] for ws in workflow_scores if ws[1] != best_wf_key][:2]
+        if alts:
+            result["alternative_workflows"] = alts
         # Override action_required with the matched workflow's steps
-        best_wf = WORKFLOW_TEMPLATES[workflow_scores[0][1]]
+        best_wf = WORKFLOW_TEMPLATES[best_wf_key]
         result["action_required"] = [
             {"step": i + 1, "instruction": s["description"], "invoke": s["invoke"], "phase": s["name"]}
             for i, s in enumerate(best_wf["steps"])
@@ -508,8 +538,8 @@ def analyze_task(task: str, ctx: Context = None) -> str:
         # Update summary with workflow info
         result["_summary"] = (
             f"Task classified as {complexity} complexity. "
-            f"Best workflow: {workflow_scores[0][2]['label']} ({workflow_scores[0][2]['steps']}). "
-            f"Matched on: {', '.join(workflow_scores[0][2]['matched_triggers']) or 'keyword overlap'}. "
+            f"Best workflow: {best_wf_info['label']} ({best_wf_info['steps']}). "
+            f"Matched on: {', '.join(best_wf_info['matched_triggers'])}. "
             f"Top tools: {', '.join(t['tool'] for t in matched_tools[:3])}."
         )
 
@@ -1661,6 +1691,55 @@ def get_workflows(workflow: str = "") -> str:
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 
+def _llm_select_workflow(task: str) -> str | None:
+    """Ask the LLM to pick the best workflow for a task.
+    Returns the workflow key (e.g. 'automation', 'bug-fix') or None on failure.
+    """
+    claude_bin = shutil.which("claude")
+    if not claude_bin:
+        return None
+
+    # Build compact workflow catalog for the prompt
+    catalog_lines = []
+    for key, wf in WORKFLOW_TEMPLATES.items():
+        steps = " → ".join(s["name"] for s in wf["steps"])
+        catalog_lines.append(f"  {key}: {wf['label']} — {wf['description']} [{steps}]")
+    catalog_text = "\n".join(catalog_lines)
+
+    prompt = f"""Pick the single best workflow for this task. Return ONLY the workflow key, nothing else.
+
+Task: {task}
+
+Available workflows:
+{catalog_text}
+
+Reply with just the key (e.g. "automation" or "bug-fix"). No explanation."""
+
+    try:
+        r = subprocess.run(
+            [claude_bin, "-p", "--model", "haiku"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        pick = r.stdout.strip().strip('"').strip("'").strip()
+        # Validate it's an actual workflow key
+        if pick in WORKFLOW_TEMPLATES:
+            return pick
+        # Try fuzzy match — LLM might return the label instead of key
+        pick_lower = pick.lower().replace(" ", "-").replace("_", "-")
+        if pick_lower in WORKFLOW_TEMPLATES:
+            return pick_lower
+        # Try matching against labels
+        for key, wf in WORKFLOW_TEMPLATES.items():
+            if pick_lower in wf["label"].lower().replace(" ", "-"):
+                return key
+        return None
+    except Exception:
+        return None
+
+
 def _run_cmd(cmd: str, timeout: int = 5) -> str:
     """Run a shell command, return stdout."""
     try:
@@ -1673,7 +1752,33 @@ def _run_cmd(cmd: str, timeout: int = 5) -> str:
 
 
 def _infer_task_type(task: str, primary_action: str) -> str:
-    """Map task text to a task type for model routing."""
+    """Map task text to a task type for model routing.
+    Uses LLM for classification, falls back to keywords.
+    """
+    claude_bin = shutil.which("claude")
+    if claude_bin:
+        try:
+            prompt = (
+                f"Classify this task into exactly ONE type. Reply with ONLY the type, nothing else.\n\n"
+                f"Types: code_generation, refactoring, test_writing, implementation, "
+                f"code_review, security_scan, architecture, research, planning, "
+                f"qa_verification, documentation, analysis, automation, design\n\n"
+                f"Task: {task}"
+            )
+            r = subprocess.run(
+                [claude_bin, "-p", "--model", "haiku"],
+                input=prompt, capture_output=True, text=True, timeout=10,
+            )
+            pick = r.stdout.strip().strip('"').lower().replace(" ", "_")
+            valid_types = {"code_generation", "refactoring", "test_writing", "implementation",
+                          "code_review", "security_scan", "architecture", "research", "planning",
+                          "qa_verification", "documentation", "analysis", "automation", "design"}
+            if pick in valid_types:
+                return pick
+        except Exception:
+            pass
+
+    # Fallback: keyword matching
     task_lower = task.lower()
     code_signals = {"write", "implement", "refactor", "fix", "create function", "add method",
                     "generate code", "build", "scaffold", "test"}

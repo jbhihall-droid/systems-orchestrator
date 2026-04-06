@@ -199,7 +199,9 @@ WORKFLOW_TEMPLATES = {
         ],
         "requires_mcp": [],
         "requires_skills": ["/systematic-debugging", "/test-driven-development"],
-        "triggers": ["bug", "fix", "broken", "crash", "error", "not working", "failing", "debug"],
+        "triggers": ["bug", "fix the", "broken", "crash", "keeps crashing", "not working",
+                      "failing", "debug", "500 error", "find and fix", "root cause",
+                      "throws an error", "stops working", "doesn't work"],
     },
     "security-audit": {
         "label": "Security Audit",
