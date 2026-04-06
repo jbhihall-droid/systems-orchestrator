@@ -80,6 +80,7 @@ QA_LEVEL_DOWN = {
     "opus": "sonnet",
     "sonnet": "haiku",
     "haiku": "haiku",
+    "gpt-5.4": "o4-mini",
     "o3": "o4-mini",
     "o4-mini": "o4-mini",
     "gpt-4.1": "o4-mini",
@@ -104,6 +105,7 @@ def _get_reasoning_depth(level: str) -> str:
         "haiku": "Be concise. One-pass solution. Skip edge cases unless obvious.",
         "sonnet": "Standard depth. Cover main cases. Note edge cases but don't over-engineer.",
         "opus": "Deep analysis. Consider edge cases, failure modes, alternatives. Be thorough.",
+        "gpt-5.4": "Full-capability implementation. Leverage deep understanding for correctness, style, and completeness.",
         "o4-mini": "Efficient implementation. Focus on correctness and clean code.",
         "o3": "Thorough implementation with edge case handling and optimization.",
         "gpt-4.1": "Comprehensive implementation with full test coverage.",
@@ -509,7 +511,7 @@ def route_task_to_model(task_type: str, agent_role: str) -> tuple[str, str]:
         cli = model_override
         # Use appropriate level for the CLI
         if cli == "codex":
-            level = "o4-mini"
+            level = "gpt-5.4"
         else:
             level = agent_default_level
     else:
