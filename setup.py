@@ -111,11 +111,15 @@ MCP_PACKS = {
     },
     "dev-mcp": {
         "label": "Development MCP Servers",
-        "description": "Git, filesystem, code intelligence",
+        "description": "Library docs, code search, web scraping",
         "servers": {
             "context7": {
                 "command": "npx",
                 "args": ["-y", "@upstash/context7-mcp@latest"],
+            },
+            "firecrawl": {
+                "command": "npx",
+                "args": ["-y", "firecrawl-mcp"],
             },
         },
     },
@@ -141,6 +145,26 @@ MCP_PACKS = {
                 "command": "semgrep",
                 "args": ["mcp"],
                 "requires_cli": "semgrep",
+            },
+        },
+    },
+    "comms-mcp": {
+        "label": "Communication MCP Servers",
+        "description": "Slack, Discord, team messaging from Claude",
+        "servers": {
+            "slack": {
+                "command": "npx",
+                "args": ["-y", "@anthropic/mcp-server-slack"],
+            },
+        },
+    },
+    "infra-mcp": {
+        "label": "Infrastructure MCP Servers",
+        "description": "Cloud deployment and container management",
+        "servers": {
+            "docker": {
+                "command": "uvx",
+                "args": ["mcp-server-docker"],
             },
         },
     },
@@ -522,8 +546,8 @@ PERSONA_SUGGESTIONS = {
     "devops": {
         "label": "DevOps / SRE / Platform Engineer",
         "packs": ["core-dev", "devops", "security", "modern-cli"],
-        "mcp_packs": ["core-mcp", "dev-mcp"],
-        "workflows": ["feature-dev", "security-audit", "quick-task"],
+        "mcp_packs": ["core-mcp", "dev-mcp", "infra-mcp"],
+        "workflows": ["docker-deploy", "ci-cd-setup", "incident-response", "quick-task"],
         "profile": "full",
     },
     "security": {
@@ -543,8 +567,9 @@ PERSONA_SUGGESTIONS = {
     "everything": {
         "label": "Everything (power user)",
         "packs": ["core-dev", "python", "node-frontend", "rust", "data-ml", "devops", "security", "modern-cli"],
-        "mcp_packs": ["core-mcp", "dev-mcp", "data-mcp", "security-mcp"],
-        "workflows": ["feature-dev", "bug-fix", "security-audit", "code-review", "quick-task"],
+        "mcp_packs": ["core-mcp", "dev-mcp", "data-mcp", "security-mcp", "comms-mcp", "infra-mcp"],
+        "workflows": ["feature-dev", "bug-fix", "security-audit", "code-review", "quick-task",
+                       "docker-deploy", "build-agent", "release", "self-improve"],
         "profile": "full",
     },
 }
