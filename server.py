@@ -103,6 +103,7 @@ def clear_tool_errors(tool_name: str):
 class AppContext:
     index: list[dict[str, Any]] = field(default_factory=list)
     tool_outcomes: dict[str, dict] = field(default_factory=dict)
+    first_run: bool = False
 
 
 @asynccontextmanager
@@ -111,13 +112,7 @@ async def lifespan(server):
 
     # Check first-run setup
     config_path = SERVER_DIR / "config.json"
-    if not config_path.exists():
-        import sys
-        print(
-            "[systems-orchestrator] First run detected. "
-            f"Run: python3 {SERVER_DIR / 'setup.py'} to configure.",
-            file=sys.stderr,
-        )
+    ctx.first_run = not config_path.exists()
 
     ctx.index = build_index()
     # Load tool outcomes if available
@@ -135,6 +130,15 @@ async def lifespan(server):
 mcp = FastMCP(
     "systems-orchestrator",
     instructions="""You are a systems-thinking orchestrator. You coordinate skills, agents, and tools.
+
+== FIRST RUN ==
+If setup_orchestrator() returns first_run: true, this is a new installation.
+You MUST call setup_orchestrator() immediately and walk the user through setup:
+1. Show them the persona options and ask which fits
+2. Call configure_orchestrator() with their choice
+3. Show what tools are missing and ask if they want to install them
+4. Call install_tools() with the tools they approve
+Do NOT skip setup. Do NOT proceed to other tools until setup is complete.
 
 == HOW TO USE THIS MCP SERVER ==
 Every tool returns JSON. You MUST read the JSON response and present the key findings
@@ -1138,6 +1142,239 @@ def systems_analysis() -> str:
         "5. SUBSYSTEMS: How do elements group?\n\n"
         "Call decompose_task() with this model, then analyze_task() for the plan."
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SETUP TOOLS — First-run onboarding via MCP
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Import setup module for tool packs and install recipes
+from setup import (
+    TOOL_PACKS, PERSONA_SUGGESTIONS, INSTALL_RECIPES,
+    detect_package_manager, get_install_cmd, load_config, CONFIG_PATH,
+)
+
+
+@mcp.tool()
+def setup_orchestrator(ctx: Context = None) -> str:
+    """Check if the orchestrator needs first-run setup.
+
+    Call this FIRST in any new conversation. If first_run is true,
+    walk the user through persona selection, tool packs, and installation.
+
+    Returns system status, available personas, tool packs, and what's missing.
+    """
+    first_run = ctx.request_context.lifespan_context.first_run if ctx else not CONFIG_PATH.exists()
+    config = load_config()
+    pm = detect_package_manager()
+
+    # Check what's installed
+    all_pack_tools: dict[str, bool] = {}
+    pack_status = {}
+    for pack_key, pack in TOOL_PACKS.items():
+        installed = []
+        missing = []
+        for tool in pack["tools"]:
+            is_installed = shutil.which(tool) is not None
+            all_pack_tools[tool] = is_installed
+            if is_installed:
+                installed.append(tool)
+            else:
+                missing.append(tool)
+        pack_status[pack_key] = {
+            "label": pack["label"],
+            "description": pack["description"],
+            "installed": installed,
+            "missing": missing,
+            "complete": len(missing) == 0,
+        }
+
+    total_tools = len(all_pack_tools)
+    total_installed = sum(1 for v in all_pack_tools.values() if v)
+    total_missing = total_tools - total_installed
+
+    # Build persona options
+    personas = {k: v["label"] for k, v in PERSONA_SUGGESTIONS.items()}
+
+    _summary = (
+        f"{'FIRST RUN — setup required. ' if first_run else 'Setup status: '}"
+        f"{total_installed}/{total_tools} pack tools installed, {total_missing} missing. "
+        f"Package manager: {pm or 'none detected'}. "
+        + (f"Current persona: {config.get('persona', 'not set')}. " if not first_run else "")
+        + ("Present the persona options to the user and ask which fits them. "
+           "Then call configure_orchestrator() with their choice."
+           if first_run else "")
+    )
+
+    return json.dumps({
+        "_summary": _summary,
+        "first_run": first_run,
+        "package_manager": pm,
+        "current_config": config if not first_run else None,
+        "personas": personas,
+        "tool_packs": pack_status,
+        "total_installed": total_installed,
+        "total_missing": total_missing,
+        "_next_step": (
+            "Ask the user which persona fits them, then call configure_orchestrator(persona=...). "
+            "After that, call install_tools() with the missing tools they approve."
+            if first_run else
+            "Setup is complete. Use other tools normally."
+        ),
+    }, indent=2)
+
+
+@mcp.tool()
+def configure_orchestrator(
+    persona: str,
+    permission_mode: str = "bypassPermissions",
+    reasoning_level: str = "sonnet",
+    extra_packs: list[str] | None = None,
+) -> str:
+    """Configure the orchestrator with user preferences. Call after setup_orchestrator().
+
+    Args:
+        persona: User role — one of: fullstack, backend, frontend, data, devops, security, student, everything
+        permission_mode: How subagents handle permissions: bypassPermissions, dontAsk, default
+        reasoning_level: Default reasoning depth: haiku, sonnet, opus
+        extra_packs: Additional tool packs beyond the persona suggestion (e.g. ["security", "rust"])
+    """
+    suggestion = PERSONA_SUGGESTIONS.get(persona)
+    if not suggestion:
+        return json.dumps({
+            "_summary": f"Unknown persona '{persona}'. Valid options: {', '.join(PERSONA_SUGGESTIONS.keys())}",
+            "error": f"Unknown persona: {persona}",
+            "valid_personas": list(PERSONA_SUGGESTIONS.keys()),
+        }, indent=2)
+
+    selected_packs = list(suggestion["packs"])
+    if extra_packs:
+        for p in extra_packs:
+            if p in TOOL_PACKS and p not in selected_packs:
+                selected_packs.append(p)
+
+    # Detect codex
+    codex_installed = shutil.which("codex") is not None
+
+    config = {
+        "version": 2,
+        "setup_complete": True,
+        "persona": suggestion["label"],
+        "catalog_profile": suggestion["profile"],
+        "selected_packs": selected_packs,
+        "dispatch": {
+            "permission_mode": permission_mode,
+            "timeout_seconds": 300,
+            "max_parallel": 4,
+        },
+        "models": {
+            "preferred_executor": "codex" if codex_installed else "claude",
+            "default_level": reasoning_level,
+        },
+    }
+
+    CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n")
+
+    # Calculate what needs installing
+    missing_tools = []
+    for pack_key in selected_packs:
+        pack = TOOL_PACKS.get(pack_key, {})
+        for tool in pack.get("tools", []):
+            if not shutil.which(tool) and tool not in missing_tools:
+                missing_tools.append(tool)
+
+    pm = detect_package_manager()
+    installable = []
+    manual = []
+    for tool in missing_tools:
+        cmd = get_install_cmd(tool, pm) if pm else None
+        if cmd:
+            installable.append({"tool": tool, "command": cmd})
+        else:
+            manual.append(tool)
+
+    _summary = (
+        f"Configured as '{suggestion['label']}' with packs: {', '.join(selected_packs)}. "
+        f"Permission mode: {permission_mode}, reasoning: {reasoning_level}. "
+        + (f"{len(missing_tools)} tools need installing ({len(installable)} auto-installable). "
+           if missing_tools else "All tools already installed! ")
+        + ("Call install_tools() to install the missing ones." if installable else "")
+    )
+
+    return json.dumps({
+        "_summary": _summary,
+        "config_saved": True,
+        "persona": suggestion["label"],
+        "selected_packs": selected_packs,
+        "missing_tools": missing_tools,
+        "installable": installable,
+        "manual_install": manual,
+        "_next_step": (
+            "Show the user the missing tools list and ask which they want to install. "
+            "Then call install_tools(tools=[...]) with their approved list. "
+            "For manual installs, show the user the tool names and let them handle it."
+            if missing_tools else
+            "Setup complete! The orchestrator is ready to use."
+        ),
+    }, indent=2)
+
+
+@mcp.tool()
+def install_tools(tools: list[str]) -> str:
+    """Install missing tools using the system package manager.
+
+    Call this after configure_orchestrator() to install approved tools.
+    Only installs tools the user has explicitly approved.
+
+    Args:
+        tools: List of tool names to install (e.g. ["nmap", "ruff", "bat"])
+    """
+    pm = detect_package_manager()
+    if not pm:
+        return json.dumps({
+            "_summary": "No package manager detected. Cannot auto-install.",
+            "error": "No package manager found (need pacman, apt, or brew)",
+        }, indent=2)
+
+    results = []
+    installed_count = 0
+    failed_count = 0
+
+    for tool in tools[:30]:  # cap at 30 to avoid runaway
+        cmd = get_install_cmd(tool, pm)
+        if not cmd:
+            results.append({"tool": tool, "status": "no_recipe", "message": f"No install recipe for {pm}"})
+            failed_count += 1
+            continue
+
+        try:
+            r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+            if r.returncode == 0:
+                results.append({"tool": tool, "status": "installed", "command": cmd})
+                installed_count += 1
+            else:
+                err = r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "unknown error"
+                results.append({"tool": tool, "status": "failed", "error": err, "command": cmd})
+                failed_count += 1
+        except subprocess.TimeoutExpired:
+            results.append({"tool": tool, "status": "timeout", "command": cmd})
+            failed_count += 1
+        except Exception as e:
+            results.append({"tool": tool, "status": "error", "error": str(e)})
+            failed_count += 1
+
+    _summary = (
+        f"Installed {installed_count}/{len(tools)} tools"
+        + (f", {failed_count} failed" if failed_count else "")
+        + f" using {pm}."
+    )
+
+    return json.dumps({
+        "_summary": _summary,
+        "results": results,
+        "installed": installed_count,
+        "failed": failed_count,
+    }, indent=2)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
