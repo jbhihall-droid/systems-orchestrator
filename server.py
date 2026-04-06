@@ -232,6 +232,48 @@ REWORK requires log_failure() first — enforced by gate.
 Code generation, refactoring, tests → Codex (if installed, else Claude)
 Reasoning, planning, QA, review → Claude
 
+== REASONING vs BRAINSTORMING ==
+- sequential-thinking MCP → Single-thread reasoning: "what's the right approach?"
+  Use for: architecture decisions, debugging hypotheses, tradeoff analysis
+- /brainstorming skill → Divergent exploration: "what are ALL the approaches?"
+  Use for: new features, creative work, when you need 3+ options to compare
+- Both → Use sequential-thinking WITHIN brainstorming to evaluate each option
+
+== DISPATCH vs AGENT TOOL ==
+- dispatch_worker/execute_pipeline → Tracked execution with QA gate and manager review
+  Use for: tasks that need accountability, tasks in a project ledger, multi-step work
+- Agent tool → Lightweight subagent, no tracking, no QA
+  Use for: quick one-off tasks, exploration, research, parallel independent work
+- /dispatching-parallel-agents → Multiple Agent tools in parallel
+  Use for: 2+ independent tasks with no shared state
+
+== WHEN TO USE THE PIPELINE ==
+- DIRECT complexity → Just do it. No pipeline, no ledger.
+- LIGHT complexity → create_task() for tracking, but execute directly
+- FULL complexity → Full pipeline: start_project → ledger → create_task → execute_pipeline
+  Worth it when: multiple coordinated steps, need audit trail, risk of rework
+
+== HOOKS vs SKILLS vs AGENTS vs PLUGINS ==
+- Hook → Automatic trigger on events (PreToolUse, PostToolUse, Stop)
+  Use for: validation, guardrails, auto-formatting, preventing behaviors
+  Example: "always lint before commit" → create a hook
+- Skill → Reusable prompt template invoked with /skill-name
+  Use for: repeatable workflows, specialized knowledge, guided procedures
+  Example: "debug systematically" → /systematic-debugging skill
+- Agent → Autonomous subagent with its own context and tools
+  Use for: parallel execution, isolated exploration, competitive approaches
+  Example: "try 3 approaches" → /agenthub spawns competing agents
+- Plugin → Bundle of hooks + skills + agents + MCP configs
+  Use for: distributing a coherent set of capabilities as a package
+  Example: security plugin = /senior-security skill + semgrep hook + CVE check agent
+
+== 3-VARIANT WORKFLOW OUTPUT ==
+analyze_task() returns THREE workflow suggestions for every prompt:
+1. recommended_workflow — best fit, default approach
+2. extended_workflow — same approach + extra quality/security/performance steps
+3. alternative_workflow — completely different approach
+Present all three to the user and let them choose.
+
 == KEY SKILLS (invoke with /skill-name) ==
 /brainstorming — explore approaches before building
 /writing-plans — turn spec into implementation tasks
@@ -552,20 +594,48 @@ def analyze_task(task: str, ctx: Context = None) -> str:
 
     if best_wf_key and best_wf_info:
         result["recommended_workflow"] = best_wf_info
-        # Add alternatives from trigger matching (excluding the pick)
-        alts = [ws[2] for ws in workflow_scores if ws[1] != best_wf_key][:2]
-        if alts:
-            result["alternative_workflows"] = alts
-        # Override action_required with the matched workflow's steps
+
+        # Generate EXTENDED workflow — same approach + quality/security steps
         best_wf = WORKFLOW_TEMPLATES[best_wf_key]
+        extended_steps = list(best_wf["steps"]) + [
+            {"name": "Quality Gate", "invoke": "/hex-tools:quality-gate", "description": "Lint, typecheck, test, coverage check"},
+            {"name": "Security Check", "invoke": "/trailofbits:differential-review", "description": "Security-focused review of changes"},
+        ]
+        result["extended_workflow"] = {
+            "workflow": best_wf_key + "-extended",
+            "label": best_wf_info["label"] + " (Extended)",
+            "description": best_wf_info["description"] + " + quality gate + security review",
+            "steps": " → ".join(s["name"] for s in extended_steps),
+            "step_details": [{"name": s["name"], "invoke": s["invoke"], "description": s["description"]}
+                             for s in extended_steps],
+        }
+
+        # ALTERNATIVE workflow — different approach entirely
+        alts = [ws[2] for ws in workflow_scores if ws[1] != best_wf_key][:1]
+        if alts:
+            result["alternative_workflow"] = alts[0]
+        else:
+            # Fallback: suggest quick-task as alternative
+            qt = WORKFLOW_TEMPLATES.get("quick-task", {})
+            if qt:
+                result["alternative_workflow"] = {
+                    "workflow": "quick-task",
+                    "label": "Quick Task",
+                    "description": "Think → Do → Verify (skip the ceremony)",
+                    "steps": " → ".join(s["name"] for s in qt["steps"]),
+                }
+
+        # Override action_required with the matched workflow's steps
         result["action_required"] = [
             {"step": i + 1, "instruction": s["description"], "invoke": s["invoke"], "phase": s["name"]}
             for i, s in enumerate(best_wf["steps"])
         ]
-        # Update summary with workflow info
+        # Update summary with all 3 variants
         result["_summary"] = (
             f"Task classified as {complexity} complexity. "
-            f"Best workflow: {best_wf_info['label']} ({best_wf_info['steps']}). "
+            f"RECOMMENDED: {best_wf_info['label']} ({best_wf_info['steps']}). "
+            f"EXTENDED: adds Quality Gate + Security Check. "
+            f"ALTERNATIVE: {result.get('alternative_workflow', {}).get('label', 'Quick Task')}. "
             f"Matched on: {', '.join(best_wf_info['matched_triggers'])}. "
             f"Top tools: {', '.join(t['tool'] for t in matched_tools[:3])}."
         )
@@ -2308,7 +2378,7 @@ Task: {task}
 Available workflows:
 {catalog_text}
 
-Reply with just the key (e.g. "automation" or "bug-fix"). No explanation."""
+Reply with just the key (e.g. "automation" or "bug-fix"), or "none" if no workflow fits well. No explanation."""
 
     try:
         r = subprocess.run(
@@ -2319,6 +2389,9 @@ Reply with just the key (e.g. "automation" or "bug-fix"). No explanation."""
             timeout=15,
         )
         pick = r.stdout.strip().strip('"').strip("'").strip()
+        # "none" means no workflow fits
+        if pick.lower() == "none":
+            return None
         # Validate it's an actual workflow key
         if pick in WORKFLOW_TEMPLATES:
             return pick
