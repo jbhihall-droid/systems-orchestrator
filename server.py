@@ -2022,7 +2022,28 @@ async def execute_pipeline(task_id: str, ctx: Context = None) -> str:
 # ── Workflow Execution State ─────────────────────────────────────────────
 # Tracks active workflow progress so the host can query stage status
 
-_ACTIVE_WORKFLOWS: dict[str, dict] = {}
+_WORKFLOWS_FILE = SERVER_DIR / ".active_workflows.json"
+
+
+def _load_active_workflows() -> dict[str, dict]:
+    """Load active workflows from disk."""
+    if _WORKFLOWS_FILE.exists():
+        try:
+            return json.loads(_WORKFLOWS_FILE.read_text())
+        except (json.JSONDecodeError, KeyError):
+            pass
+    return {}
+
+
+def _save_active_workflows():
+    """Persist active workflows to disk."""
+    try:
+        _WORKFLOWS_FILE.write_text(json.dumps(_ACTIVE_WORKFLOWS, indent=2) + "\n")
+    except Exception:
+        pass
+
+
+_ACTIVE_WORKFLOWS: dict[str, dict] = _load_active_workflows()
 
 
 @mcp.tool()
@@ -2067,6 +2088,7 @@ async def run_workflow(workflow: str, task: str = "", ctx: Context = None) -> st
         "completed_steps": [],
         "status": "running",
     }
+    _save_active_workflows()
 
     step = wf["steps"][0]
     if ctx:
@@ -2146,6 +2168,7 @@ async def advance_workflow(session_id: str, step_result: str = "", ctx: Context 
 
     next_idx = completed_idx + 1
     state["current_step"] = next_idx
+    _save_active_workflows()
 
     if ctx:
         await ctx.report_progress(next_idx, total,
@@ -2154,6 +2177,7 @@ async def advance_workflow(session_id: str, step_result: str = "", ctx: Context 
     # Check if workflow is done
     if next_idx >= total:
         state["status"] = "completed"
+        _save_active_workflows()
         if ctx:
             await ctx.report_progress(total, total, f"✓ Workflow '{state['label']}' complete!")
 

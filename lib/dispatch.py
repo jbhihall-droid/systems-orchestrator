@@ -45,6 +45,13 @@ def _load_dispatch_config() -> dict:
     return defaults
 
 
+def _get_config(key: str, default=None):
+    """Get a dispatch config value, reloading from disk each time."""
+    config = _load_dispatch_config()
+    return config.get(key, default)
+
+
+# Cache at startup for backwards compat, but prefer _get_config() for live reads
 _DISPATCH_CONFIG = _load_dispatch_config()
 
 # ── Model Registry ───────────────────────────────────────────────────────
@@ -164,7 +171,7 @@ def _get_reasoning_depth(level: str) -> str:
 
 def get_configured_default_level() -> str:
     """Get the user's configured default reasoning level."""
-    return _DISPATCH_CONFIG.get("default_level", "sonnet")
+    return _get_config("default_level", "sonnet")
 
 
 # ── Agent MCP Context ────────────────────────────────────────────────────
@@ -431,7 +438,7 @@ def execute_dispatch(
     Returns the model's response.
     """
     if timeout is None:
-        timeout = _DISPATCH_CONFIG.get("timeout_seconds", 300)
+        timeout = _get_config("timeout_seconds", 300)
     model_cli = dispatch_packet["model_cli"]
     prompt = dispatch_packet["prompt"]
     level = dispatch_packet.get("reasoning_level", "sonnet")
@@ -452,7 +459,7 @@ def execute_dispatch(
     try:
         if model_cli == "claude":
             # claude -p reads from stdin, with configured permission mode
-            perm_mode = _DISPATCH_CONFIG.get("permission_mode", "bypassPermissions")
+            perm_mode = _get_config("permission_mode", "bypassPermissions")
             cmd = [binary, "-p", "--permission-mode", perm_mode]
             if level in config["models"]:
                 cmd.extend(["--model", config["models"][level]])
@@ -461,6 +468,8 @@ def execute_dispatch(
             mcp_config = Path.home() / ".mcp.json"
             if mcp_config.exists():
                 cmd.extend(["--mcp-config", str(mcp_config)])
+            # Give subagents full tool access including file editing
+            cmd.extend(["--allowedTools", "Edit,Read,Write,Bash,Glob,Grep,Agent,WebSearch,WebFetch,TodoWrite"])
             # Give subagents access to the working directory
             if working_dir and working_dir != ".":
                 cmd.extend(["--add-dir", working_dir])
@@ -523,7 +532,7 @@ def dispatch_parallel(
     import concurrent.futures
 
     results = []
-    max_parallel = _DISPATCH_CONFIG.get("max_parallel", 4)
+    max_parallel = _get_config("max_parallel", 4)
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(packets), max_parallel)) as pool:
         futures = {
             pool.submit(execute_dispatch, packet, working_dir, timeout): i
