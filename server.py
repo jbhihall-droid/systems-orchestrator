@@ -1024,30 +1024,45 @@ def get_project_knowledge() -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 
 @mcp.tool()
-def dispatch_worker(task_id: str, reasoning_level: str = "") -> str:
-    """Craft a worker dispatch prompt for a task.
+async def dispatch_worker(task_id: str, reasoning_level: str = "", ctx: Context = None) -> str:
+    """Dispatch a worker agent to execute a task.
 
     Args:
         task_id: The task ID.
         reasoning_level: Override reasoning level.
     """
+    if ctx:
+        await ctx.report_progress(0, 3, f"Loading task {task_id}...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
         parsed = json.loads(task_content)
         if "error" in parsed:
             return task_content
+    if ctx:
+        await ctx.report_progress(1, 3, "Crafting worker prompt...")
     packet = craft_worker_prompt(task_id, task_content, str(PLAYBOOK_DIR), reasoning_level)
+    if ctx:
+        await ctx.report_progress(2, 3, f"Dispatching to {packet['model_cli']}/{packet['reasoning_level']}...")
+    packet["_summary"] = (
+        f"Worker agent dispatched for task {task_id}. "
+        f"Model: {packet['model_cli']}/{packet['reasoning_level']}, dept: {packet.get('dept', 'engineering')}. "
+        f"Execute this prompt to get the worker's output."
+    )
+    if ctx:
+        await ctx.report_progress(3, 3, "Worker prompt ready")
     return json.dumps(packet, indent=2)
 
 
 @mcp.tool()
-def dispatch_qa(task_id: str, reasoning_level: str = "sonnet") -> str:
-    """Craft a QA dispatch prompt for a task.
+async def dispatch_qa(task_id: str, reasoning_level: str = "sonnet", ctx: Context = None) -> str:
+    """Dispatch a QA verification agent to review a task.
 
     Args:
         task_id: The task ID.
         reasoning_level: Worker's reasoning level (QA will step down from this).
     """
+    if ctx:
+        await ctx.report_progress(0, 3, f"Loading task {task_id} for QA review...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
         parsed = json.loads(task_content)
@@ -1055,52 +1070,85 @@ def dispatch_qa(task_id: str, reasoning_level: str = "sonnet") -> str:
             return task_content
     parts = task_content.split("## Worker Report\n")
     worker_report = parts[1].split("\n## QA Report")[0] if len(parts) > 1 else "No worker report found"
+    if ctx:
+        await ctx.report_progress(1, 3, "Crafting QA verification prompt...")
     packet = craft_qa_prompt(task_id, task_content, worker_report, str(PLAYBOOK_DIR), reasoning_level)
+    packet["_summary"] = (
+        f"QA agent dispatched for task {task_id}. "
+        f"Model: {packet['model_cli']}/{packet['reasoning_level']}. "
+        f"Verifying worker output independently."
+    )
+    if ctx:
+        await ctx.report_progress(3, 3, "QA prompt ready")
     return json.dumps(packet, indent=2)
 
 
 @mcp.tool()
-def dispatch_researcher(task_id: str) -> str:
-    """Craft a researcher dispatch prompt.
+async def dispatch_researcher(task_id: str, ctx: Context = None) -> str:
+    """Dispatch a researcher agent to investigate a task.
 
     Args:
         task_id: The task ID.
     """
+    if ctx:
+        await ctx.report_progress(0, 2, f"Loading task {task_id} for research...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
         parsed = json.loads(task_content)
         if "error" in parsed:
             return task_content
     goal = _get_project_goal(str(PROJECT_DIR))
+    if ctx:
+        await ctx.report_progress(1, 2, "Crafting researcher prompt...")
     packet = craft_researcher_prompt(task_id, task_content, str(PLAYBOOK_DIR), goal)
+    packet["_summary"] = (
+        f"Researcher agent dispatched for task {task_id}. "
+        f"Model: {packet['model_cli']}/{packet['reasoning_level']}. "
+        f"Investigating unknowns, risks, and approach options."
+    )
+    if ctx:
+        await ctx.report_progress(2, 2, "Research prompt ready")
     return json.dumps(packet, indent=2)
 
 
 @mcp.tool()
-def dispatch_planner(task_id: str) -> str:
-    """Craft a planner dispatch prompt.
+async def dispatch_planner(task_id: str, ctx: Context = None) -> str:
+    """Dispatch a planner agent to break down a task into steps.
 
     Args:
         task_id: The task ID.
     """
+    if ctx:
+        await ctx.report_progress(0, 2, f"Loading task {task_id} for planning...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
         parsed = json.loads(task_content)
         if "error" in parsed:
             return task_content
     goal = _get_project_goal(str(PROJECT_DIR))
+    if ctx:
+        await ctx.report_progress(1, 2, "Crafting planner prompt...")
     packet = craft_planner_prompt(task_id, task_content, str(PLAYBOOK_DIR), goal)
+    packet["_summary"] = (
+        f"Planner agent dispatched for task {task_id}. "
+        f"Model: {packet['model_cli']}/{packet['reasoning_level']}. "
+        f"Breaking task into ordered, concrete steps."
+    )
+    if ctx:
+        await ctx.report_progress(2, 2, "Plan prompt ready")
     return json.dumps(packet, indent=2)
 
 
 @mcp.tool()
-def dispatch_manager(task_id: str, rework_count: int = 0) -> str:
-    """Craft a manager review prompt.
+async def dispatch_manager(task_id: str, rework_count: int = 0, ctx: Context = None) -> str:
+    """Dispatch a manager agent to review worker + QA results and make a verdict.
 
     Args:
         task_id: The task ID.
         rework_count: How many rework cycles so far.
     """
+    if ctx:
+        await ctx.report_progress(0, 2, f"Loading task {task_id} for manager review...")
     task_content = _get_task(str(PROJECT_DIR), task_id)
     if task_content.startswith("{"):
         parsed = json.loads(task_content)
@@ -1111,7 +1159,16 @@ def dispatch_manager(task_id: str, rework_count: int = 0) -> str:
     parts2 = task_content.split("## QA Report")
     qa_report = parts2[1].split("\n## Manager Review")[0] if len(parts2) > 1 else ""
     goal = _get_project_goal(str(PROJECT_DIR))
+    if ctx:
+        await ctx.report_progress(1, 2, "Crafting manager review prompt...")
     packet = craft_manager_prompt(task_id, task_content, worker_report, qa_report, rework_count, goal)
+    packet["_summary"] = (
+        f"Manager review dispatched for task {task_id} (rework #{rework_count}). "
+        f"Model: {packet['model_cli']}/{packet['reasoning_level']}. "
+        f"Will issue verdict: VERIFIED, REWORK, or ESCALATED."
+    )
+    if ctx:
+        await ctx.report_progress(2, 2, "Manager prompt ready")
     return json.dumps(packet, indent=2)
 
 
@@ -1156,8 +1213,8 @@ from setup import (
 
 
 @mcp.tool()
-def setup_orchestrator(ctx: Context = None) -> str:
-    """Check if the orchestrator needs first-run setup.
+async def setup_orchestrator(ctx: Context = None) -> str:
+    """Check if Dobby needs first-run setup.
 
     Call this FIRST in any new conversation. If first_run is true,
     walk the user through persona selection, tool packs, and installation.
@@ -1168,10 +1225,15 @@ def setup_orchestrator(ctx: Context = None) -> str:
     config = load_config()
     pm = detect_package_manager()
 
+    if ctx:
+        await ctx.report_progress(0, len(TOOL_PACKS), "Scanning tool packs...")
+
     # Check what's installed
     all_pack_tools: dict[str, bool] = {}
     pack_status = {}
-    for pack_key, pack in TOOL_PACKS.items():
+    for i, (pack_key, pack) in enumerate(TOOL_PACKS.items()):
+        if ctx:
+            await ctx.report_progress(i + 1, len(TOOL_PACKS), f"Checking {pack['label']}...")
         installed = []
         missing = []
         for tool in pack["tools"]:
@@ -1225,7 +1287,7 @@ def setup_orchestrator(ctx: Context = None) -> str:
 
 
 @mcp.tool()
-def configure_orchestrator(
+async def configure_orchestrator(
     persona: str,
     permission_mode: str = "bypassPermissions",
     reasoning_level: str = "sonnet",
@@ -1320,7 +1382,7 @@ def configure_orchestrator(
 
 
 @mcp.tool()
-def install_tools(tools: list[str]) -> str:
+async def install_tools(tools: list[str], ctx: Context = None) -> str:
     """Install missing tools using the system package manager.
 
     Call this after configure_orchestrator() to install approved tools.
@@ -1339,29 +1401,46 @@ def install_tools(tools: list[str]) -> str:
     results = []
     installed_count = 0
     failed_count = 0
+    total = min(len(tools), 30)
 
-    for tool in tools[:30]:  # cap at 30 to avoid runaway
+    if ctx:
+        await ctx.report_progress(0, total, f"Starting installation of {total} tools via {pm}...")
+
+    for i, tool in enumerate(tools[:30]):  # cap at 30 to avoid runaway
         cmd = get_install_cmd(tool, pm)
         if not cmd:
             results.append({"tool": tool, "status": "no_recipe", "message": f"No install recipe for {pm}"})
             failed_count += 1
+            if ctx:
+                await ctx.report_progress(i + 1, total, f"⚠ {tool} — no install recipe")
             continue
+
+        if ctx:
+            await ctx.report_progress(i, total, f"Installing {tool}... ({cmd})")
 
         try:
             r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
             if r.returncode == 0:
                 results.append({"tool": tool, "status": "installed", "command": cmd})
                 installed_count += 1
+                if ctx:
+                    await ctx.report_progress(i + 1, total, f"✓ {tool} installed")
             else:
                 err = r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "unknown error"
                 results.append({"tool": tool, "status": "failed", "error": err, "command": cmd})
                 failed_count += 1
+                if ctx:
+                    await ctx.report_progress(i + 1, total, f"✗ {tool} failed: {err[:80]}")
         except subprocess.TimeoutExpired:
             results.append({"tool": tool, "status": "timeout", "command": cmd})
             failed_count += 1
+            if ctx:
+                await ctx.report_progress(i + 1, total, f"✗ {tool} timed out")
         except Exception as e:
             results.append({"tool": tool, "status": "error", "error": str(e)})
             failed_count += 1
+            if ctx:
+                await ctx.report_progress(i + 1, total, f"✗ {tool} error: {e}")
 
     _summary = (
         f"Installed {installed_count}/{len(tools)} tools"
