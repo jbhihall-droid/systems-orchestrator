@@ -595,20 +595,26 @@ def analyze_task(task: str, ctx: Context = None) -> str:
     if best_wf_key and best_wf_info:
         result["recommended_workflow"] = best_wf_info
 
-        # Generate EXTENDED workflow — same approach + quality/security steps
+        # Generate EXTENDED workflow — LLM designs the best complete workflow for this task
         best_wf = WORKFLOW_TEMPLATES[best_wf_key]
-        extended_steps = list(best_wf["steps"]) + [
-            {"name": "Quality Gate", "invoke": "/hex-tools:quality-gate", "description": "Lint, typecheck, test, coverage check"},
-            {"name": "Security Check", "invoke": "/trailofbits:differential-review", "description": "Security-focused review of changes"},
-        ]
-        result["extended_workflow"] = {
-            "workflow": best_wf_key + "-extended",
-            "label": best_wf_info["label"] + " (Extended)",
-            "description": best_wf_info["description"] + " + quality gate + security review",
-            "steps": " → ".join(s["name"] for s in extended_steps),
-            "step_details": [{"name": s["name"], "invoke": s["invoke"], "description": s["description"]}
-                             for s in extended_steps],
-        }
+        llm_extended = _llm_design_extended_workflow(task, best_wf_key, best_wf)
+        if llm_extended and "steps" in llm_extended:
+            result["extended_workflow"] = {
+                "workflow": best_wf_key + "-extended",
+                "label": llm_extended.get("label", best_wf_info["label"] + " (Extended)"),
+                "description": llm_extended.get("description", ""),
+                "steps": " → ".join(s["name"] for s in llm_extended["steps"]),
+                "step_details": llm_extended["steps"],
+            }
+        else:
+            # Fallback if LLM fails
+            result["extended_workflow"] = {
+                "workflow": best_wf_key + "-extended",
+                "label": best_wf_info["label"] + " (Extended)",
+                "description": best_wf_info["description"],
+                "steps": best_wf_info["steps"],
+                "step_details": list(best_wf["steps"]),
+            }
 
         # ALTERNATIVE workflow — different approach entirely
         alts = [ws[2] for ws in workflow_scores if ws[1] != best_wf_key][:1]
@@ -2355,6 +2361,79 @@ def workflow_status(session_id: str = "") -> str:
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
+
+def _llm_design_extended_workflow(task: str, wf_key: str, wf: dict) -> dict | None:
+    """Ask the LLM to design the best complete workflow for this specific task.
+    The extended workflow is NOT just the recommended + extras — it's a purpose-built
+    workflow that the LLM designs from scratch for this exact task.
+    Returns a dict with label, description, steps, or None on failure.
+    """
+    claude_bin = shutil.which("claude")
+    if not claude_bin:
+        return None
+
+    current_steps = json.dumps([{"name": s["name"], "invoke": s["invoke"], "description": s["description"]}
+                                 for s in wf["steps"]], indent=2)
+
+    # Build a list of available tools/skills the LLM can draw from
+    available = (
+        "Available skills: /brainstorming, /writing-plans, /subagent-driven-development, "
+        "/verification-before-completion, /systematic-debugging, /test-driven-development, "
+        "/frontend-design:frontend-design, /senior-security, /senior-secops, "
+        "/engineering-skills:api-test-suite-builder, /engineering-skills:performance-profiler, "
+        "/engineering-skills:ci-cd-pipeline-builder, /engineering-skills:dependency-auditor, "
+        "/engineering-skills:tech-debt-tracker, /engineering-skills:migration-architect, "
+        "/hex-tools:quality-gate, /hex-tools:code-auditor, /hex-tools:performance-optimizer, "
+        "/trailofbits:mutation-testing, /trailofbits:differential-review, /trailofbits:property-based-testing, "
+        "/docker-development:docker-development, /observability-designer, /code-to-prd:code-to-prd, "
+        "/runbook-generator, /simplify, /autoresearch-agent, /context-engineering:kaizen\n"
+        "Available MCP tools: sequential-thinking, WebSearch, WebFetch, Firecrawl, context7\n"
+        "Available agents: Agent (subagent), /agenthub (parallel competing agents)\n"
+        "Other: Bash commands, Python scripts, cron/scheduling, Playwright (browser testing)"
+    )
+
+    prompt = f"""You must design a DIFFERENT, MORE THOROUGH workflow for this task.
+
+Task: {task}
+
+The basic workflow is "{wf['label']}":
+{current_steps}
+
+Your job: Create an EXTENDED workflow that is DIFFERENT from the basic one. It must:
+1. Include ALL the basic steps PLUS additional steps specific to THIS task
+2. Add 3-5 NEW steps that the basic workflow doesn't have
+3. The new steps must be SPECIFIC to this task — not generic "quality gate" or "review"
+
+For example:
+- Restaurants + notifications → add: geolocation setup, notification preferences, price comparison, menu scraping, deduplication
+- Login crash → add: input sanitization audit, XSS testing, fuzzing special characters, regression test suite, error monitoring
+- Beautiful UI → add: design system setup, accessibility audit (WCAG), responsive breakpoint testing, performance budget, dark mode
+- CI/CD → add: secret management, branch protection rules, deployment rollback, status badges, notification webhooks
+
+{available}
+
+You MUST return ONLY valid JSON with MORE steps than the basic workflow:
+{{"label": "Name (Extended)", "description": "one line summary", "steps": [{{"name": "Step Name", "invoke": "specific tool/skill", "description": "what exactly to do"}}]}}"""
+
+    try:
+        r = subprocess.run(
+            [claude_bin, "-p", "--model", "sonnet"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        output = r.stdout.strip()
+        if "{" in output:
+            json_str = output[output.index("{"):output.rindex("}") + 1]
+            result = json.loads(json_str)
+            if isinstance(result, dict) and "steps" in result:
+                return result
+    except Exception:
+        pass
+
+    return None
+
 
 def _llm_select_workflow(task: str) -> str | None:
     """Ask the LLM to pick the best workflow for a task.
