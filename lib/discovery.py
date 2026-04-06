@@ -47,6 +47,141 @@ KNOWN_CLI_TOOLS = [
     "tmux", "screen",
 ]
 
+# Claude Code native tools — always available in the runtime
+CLAUDE_CODE_NATIVE_TOOLS = [
+    {
+        "name": "Read",
+        "type": "native",
+        "description": "Read file contents from the filesystem with line numbers",
+        "categories": ["development/general", "code"],
+        "actions": ["observe"],
+        "use_when": "Need to read a file, view source code, inspect configuration",
+        "do_not_use_when": "Need to search across files (use Grep/Glob instead)",
+    },
+    {
+        "name": "Edit",
+        "type": "native",
+        "description": "Perform exact string replacements in files",
+        "categories": ["development/general", "code"],
+        "actions": ["transform"],
+        "use_when": "Need to modify existing files, fix code, update configuration",
+        "do_not_use_when": "Creating a new file from scratch (use Write instead)",
+    },
+    {
+        "name": "Write",
+        "type": "native",
+        "description": "Create or overwrite files on the filesystem",
+        "categories": ["development/general", "code"],
+        "actions": ["transform"],
+        "use_when": "Need to create a new file or completely rewrite an existing one",
+        "do_not_use_when": "Making small edits to existing files (use Edit instead)",
+    },
+    {
+        "name": "Glob",
+        "type": "native",
+        "description": "Fast file pattern matching — find files by name patterns",
+        "categories": ["development/general", "search"],
+        "actions": ["observe"],
+        "use_when": "Need to find files by name or extension pattern like *.py or src/**/*.ts",
+        "do_not_use_when": "Searching file contents (use Grep instead)",
+    },
+    {
+        "name": "Grep",
+        "type": "native",
+        "description": "Search file contents with regex — powered by ripgrep",
+        "categories": ["development/general", "search", "code"],
+        "actions": ["observe", "analyze"],
+        "use_when": "Need to search for text patterns, find function definitions, locate code",
+        "do_not_use_when": "Searching for files by name (use Glob instead)",
+    },
+    {
+        "name": "Bash",
+        "type": "native",
+        "description": "Execute shell commands — system operations, builds, tests, git",
+        "categories": ["development/general", "development/cli"],
+        "actions": ["observe", "transform", "test", "verify"],
+        "use_when": "Need to run commands, execute tests, build projects, git operations",
+        "do_not_use_when": "Reading/editing files (use Read/Edit instead), searching (use Grep/Glob)",
+    },
+    {
+        "name": "Agent",
+        "type": "native",
+        "description": "Launch subagents for complex multi-step tasks — research, explore, plan",
+        "categories": ["development/general", "agent/reasoning"],
+        "actions": ["analyze", "plan", "transform"],
+        "use_when": "Complex tasks needing multiple steps, parallel research, deep codebase exploration",
+        "do_not_use_when": "Simple single-step operations, direct file reads or edits",
+    },
+    {
+        "name": "WebSearch",
+        "type": "native",
+        "description": "Search the web for information, documentation, and answers",
+        "categories": ["search", "development/general"],
+        "actions": ["observe"],
+        "use_when": "Need to search for documentation, find solutions, look up APIs",
+        "do_not_use_when": "Searching local codebase (use Grep/Glob instead)",
+    },
+    {
+        "name": "WebFetch",
+        "type": "native",
+        "description": "Fetch content from URLs — web pages, APIs, documentation",
+        "categories": ["development/general", "data/scraping"],
+        "actions": ["observe"],
+        "use_when": "Need to fetch a specific URL, read documentation, call an API",
+        "do_not_use_when": "Searching the web broadly (use WebSearch instead)",
+    },
+    {
+        "name": "TodoWrite",
+        "type": "native",
+        "description": "Track task progress with structured todo lists",
+        "categories": ["development/general", "agent/reasoning"],
+        "actions": ["plan"],
+        "use_when": "Complex multi-step tasks requiring progress tracking",
+        "do_not_use_when": "Single trivial tasks",
+    },
+]
+
+# Live MCP servers connected in the current session (populated from ~/.mcp.json + VS Code)
+# These are MCP servers actually providing tools right now
+LIVE_MCP_SERVERS = {
+    "claude_ai_Hugging_Face": {
+        "name": "Hugging Face (claude.ai)",
+        "type": "mcp",
+        "description": "HuggingFace Hub — search models, datasets, papers, spaces, read docs",
+        "categories": ["data/ml", "ai"],
+        "actions": ["observe", "analyze"],
+        "use_when": "Search AI models, datasets, papers on HuggingFace Hub",
+        "tools": ["hf_hub_query", "hf_doc_search", "hf_doc_fetch", "paper_search",
+                  "space_search", "hub_repo_search", "hub_repo_details", "dynamic_space"],
+    },
+    "claude_ai_Notion": {
+        "name": "Notion (claude.ai)",
+        "type": "mcp",
+        "description": "Notion workspace — search, create, update pages, databases, comments",
+        "categories": ["collaboration", "data"],
+        "actions": ["observe", "transform"],
+        "use_when": "Manage Notion pages, search workspace, create databases",
+        "tools": ["notion-search", "notion-create-pages", "notion-update-page",
+                  "notion-create-database", "notion-fetch"],
+    },
+    "claude_ai_Linear": {
+        "name": "Linear (claude.ai)",
+        "type": "mcp",
+        "description": "Linear project management — issues, projects, cycles",
+        "categories": ["collaboration", "development/general"],
+        "actions": ["observe", "transform"],
+        "use_when": "Track issues, manage projects in Linear",
+    },
+    "claude_ai_GoDaddy": {
+        "name": "GoDaddy (claude.ai)",
+        "type": "mcp",
+        "description": "GoDaddy domains — check availability, get suggestions",
+        "categories": ["infra/web"],
+        "actions": ["observe"],
+        "use_when": "Check domain availability, find domain names",
+    },
+}
+
 # VS Code MCP tool categories (available when running in VS Code)
 VSCODE_MCP_TOOLS = {
     "playwright": {
@@ -108,9 +243,39 @@ def build_index(
     mcp_config: Path | None = None,
     include_cli: bool = True,
     include_vscode: bool = True,
+    include_native: bool = True,
+    include_live_mcp: bool = True,
+    include_skill_registry: bool = True,
 ) -> list[dict[str, Any]]:
-    """Build the unified tool index from all sources."""
+    """Build the unified tool index from all sources.
+
+    Sources (in order):
+    1. Tool catalog JSON (CLI tools, MCP tools, workflows)
+    2. Skills directory (~/.claude/skills/)
+    3. Skill registry (catalog/skill_registry.json)
+    4. MCP servers (from ~/.mcp.json)
+    5. VS Code MCP tools
+    6. Live MCP servers (connected in current session)
+    7. Claude Code native tools (Read, Edit, Bash, etc.)
+    8. PATH-installed CLI tools
+    """
     index: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+
+    def _add(entry: dict) -> None:
+        """Add entry, deduplicating by name (first source wins).
+        Also checks installed status for CLI tools."""
+        name = entry.get("name", "")
+        # Normalize categories to use hierarchical form
+        if "categories" in entry:
+            entry["categories"] = [_normalize_category(c) for c in entry["categories"]]
+        # Check installed status for CLI tools from catalog
+        if entry.get("type") == "cli" and "installed" not in entry:
+            binary = entry.get("binary", name)
+            entry["installed"] = shutil.which(binary) is not None
+        if name and name not in seen_names:
+            seen_names.add(name)
+            index.append(entry)
 
     # 1. Tool catalog
     cat_path = catalog_path or DEFAULT_CATALOG_PATH
@@ -121,11 +286,11 @@ def build_index(
             for entry in entries:
                 entry.setdefault("type", "cli")
                 entry.setdefault("source", "catalog")
-                index.append(entry)
+                _add(entry)
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # 2. Skills
+    # 2. Skills from ~/.claude/skills/
     sk_dir = skills_dir or DEFAULT_SKILLS_DIR
     if sk_dir.exists():
         for skill_dir in sorted(sk_dir.iterdir()):
@@ -134,17 +299,15 @@ def build_index(
             skill_md = skill_dir / "SKILL.md"
             if skill_md.exists():
                 content = skill_md.read_text()
-                # Extract description from first line or paragraph
                 lines = content.strip().splitlines()
                 desc = lines[0].lstrip("# ").strip() if lines else skill_dir.name
-                # Look for USE WHEN or similar
                 use_when = ""
                 for line in lines:
                     if any(trigger in line.lower() for trigger in ["use when", "use for", "when:"]):
                         use_when = line.strip()
                         break
 
-                index.append({
+                _add({
                     "name": skill_dir.name,
                     "type": "skill",
                     "source": "skills_dir",
@@ -155,14 +318,32 @@ def build_index(
                     "path": str(skill_md),
                 })
 
-    # 3. MCP servers
+    # 3. Skill registry (workflow skills from catalog/skill_registry.json)
+    if include_skill_registry:
+        for skill in load_skill_registry():
+            _add({
+                "name": skill["name"],
+                "type": "skill",
+                "source": "skill_registry",
+                "description": skill.get("description", ""),
+                "use_when": skill.get("use_when", []),
+                "do_not_use_when": skill.get("do_not_use_when", []),
+                "categories": [skill.get("category", "general")],
+                "actions": [skill.get("phase", "execute")],
+                "phase": skill.get("phase", ""),
+                "sequence_order": skill.get("sequence_order", 0),
+                "requires": skill.get("requires", []),
+                "produces": skill.get("produces", []),
+            })
+
+    # 4. MCP servers from ~/.mcp.json
     mcp_path = mcp_config or DEFAULT_MCP_CONFIG
     if mcp_path.exists():
         try:
             mcp_data = json.loads(mcp_path.read_text())
             servers = mcp_data.get("mcpServers", {})
             for name, config in servers.items():
-                index.append({
+                _add({
                     "name": name,
                     "type": "mcp_server",
                     "source": "mcp_config",
@@ -174,19 +355,35 @@ def build_index(
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # 4. VS Code MCP tools
+    # 5. VS Code MCP tools
     if include_vscode:
         for tool in VSCODE_MCP_TOOLS.values():
             tool_copy = dict(tool)
             tool_copy["source"] = "vscode_mcp"
-            index.append(tool_copy)
+            _add(tool_copy)
 
-    # 5. CLI tools from PATH
+    # 6. Live MCP servers (connected in current session)
+    if include_live_mcp:
+        for key, server in LIVE_MCP_SERVERS.items():
+            server_copy = dict(server)
+            server_copy["source"] = "live_mcp"
+            server_copy["installed"] = True
+            _add(server_copy)
+
+    # 7. Claude Code native tools
+    if include_native:
+        for tool in CLAUDE_CODE_NATIVE_TOOLS:
+            tool_copy = dict(tool)
+            tool_copy["source"] = "native"
+            tool_copy["installed"] = True
+            _add(tool_copy)
+
+    # 8. CLI tools from PATH
     if include_cli:
         for tool_name in KNOWN_CLI_TOOLS:
             path = shutil.which(tool_name)
             if path:
-                index.append({
+                _add({
                     "name": tool_name,
                     "type": "cli",
                     "source": "path",
@@ -198,6 +395,65 @@ def build_index(
                 })
 
     return index
+
+
+# ── Category Normalization ───────────────────────────────────────────────
+
+# Map flat/duplicate categories to canonical hierarchical forms
+_CATEGORY_ALIASES = {
+    "python": "development/python",
+    "javascript": "development/frontend",
+    "rust": "development/backend",
+    "golang": "development/backend",
+    "code": "development/general",
+    "git": "development/git",
+    "version_control": "development/git",
+    "testing": "development/testing",
+    "refactoring": "development/general",
+    "build": "development/general",
+    "linting": "development/general",
+    "formatting": "development/general",
+    "debugging": "development/general",
+    "search": "development/general",
+    "file": "development/general",
+    "general": "general",
+    "container": "infra/containers",
+    "devops": "infra/containers",
+    "kubernetes": "infra/containers",
+    "cloud": "infra/cloud",
+    "infrastructure": "infra/cloud",
+    "deployment": "infra/cloud",
+    "database": "data/database",
+    "data": "data/general",
+    "analytics": "data/analysis",
+    "json": "data/general",
+    "cache": "data/cache",
+    "web": "development/frontend",
+    "http": "development/frontend",
+    "browser": "testing/browser",
+    "automation": "infra/scheduling",
+    "security": "security/general",
+    "vulnerability": "security/scanning",
+    "network": "network/general",
+    "monitoring": "system/monitoring",
+    "system": "system/general",
+    "terminal": "system/general",
+    "document": "data/general",
+    "remote": "network/general",
+    "media": "data/general",
+    "transform": "data/general",
+    "collaboration": "development/general",
+    "ai": "data/ml",
+    "ml": "data/ml",
+    "reasoning": "agent/reasoning",
+    "planning": "agent/reasoning",
+    "persistence": "agent/memory",
+}
+
+
+def _normalize_category(cat: str) -> str:
+    """Normalize a category to its canonical hierarchical form."""
+    return _CATEGORY_ALIASES.get(cat, cat)
 
 
 # ── Category/Action Inference ────────────────────────────────────────────
@@ -362,6 +618,7 @@ def get_index_stats(index: list[dict[str, Any]]) -> dict[str, Any]:
     by_source: dict[str, int] = {}
     by_category: dict[str, int] = {}
     has_use_when = 0
+    installed_count = 0
 
     for tool in index:
         t = tool.get("type", "unknown")
@@ -372,9 +629,12 @@ def get_index_stats(index: list[dict[str, Any]]) -> dict[str, Any]:
             by_category[cat] = by_category.get(cat, 0) + 1
         if tool.get("use_when"):
             has_use_when += 1
+        if tool.get("installed") or tool.get("source") in ("native", "live_mcp"):
+            installed_count += 1
 
     return {
         "total": len(index),
+        "installed": installed_count,
         "by_type": by_type,
         "by_source": by_source,
         "by_category": dict(sorted(by_category.items(), key=lambda x: -x[1])),

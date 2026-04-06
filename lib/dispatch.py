@@ -17,6 +17,29 @@ from typing import Any
 
 from lib.ledger import DEPARTMENTS
 
+# ── Config Loading ──────────────────────────────────────────────────────
+
+_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
+
+
+def _load_dispatch_config() -> dict:
+    """Load dispatch config from setup, with sensible defaults."""
+    defaults = {
+        "permission_mode": "bypassPermissions",
+        "timeout_seconds": 300,
+        "max_parallel": 4,
+    }
+    if _CONFIG_PATH.exists():
+        try:
+            config = json.loads(_CONFIG_PATH.read_text())
+            return {**defaults, **config.get("dispatch", {})}
+        except (json.JSONDecodeError, KeyError):
+            pass
+    return defaults
+
+
+_DISPATCH_CONFIG = _load_dispatch_config()
+
 # ── Model Registry ───────────────────────────────────────────────────────
 
 MODELS = {
@@ -49,22 +72,41 @@ MODELS = {
 
 # ── Agent → Model Routing ────────────────────────────────────────────────
 
-AGENT_ROUTING = {
-    # Agent role → preferred model CLI → reasoning level
-    "researcher": ("claude", "sonnet"),   # Research needs broad reasoning
-    "planner": ("claude", "opus"),        # Planning needs deep reasoning
-    "executor": ("codex", "gpt-5.4"),     # Code execution is Codex's strength
-    "verifier": ("claude", "sonnet"),     # QA needs careful analysis
-    "reviewer": ("claude", "opus"),       # Manager review needs depth
-}
+# Detect Codex availability once at import time
+_CODEX_AVAILABLE = shutil.which("codex") is not None
 
-# Override for specific task types
+# When Codex is available, use it for execution. Otherwise, all roles use Claude.
+if _CODEX_AVAILABLE:
+    AGENT_ROUTING = {
+        "researcher": ("claude", "sonnet"),
+        "planner": ("claude", "opus"),
+        "executor": ("codex", "gpt-5.4"),
+        "verifier": ("claude", "sonnet"),
+        "reviewer": ("claude", "opus"),
+    }
+else:
+    # Codex not installed — route everything through Claude
+    AGENT_ROUTING = {
+        "researcher": ("claude", "sonnet"),
+        "planner": ("claude", "opus"),
+        "executor": ("claude", "sonnet"),   # Claude handles execution when Codex unavailable
+        "verifier": ("claude", "sonnet"),
+        "reviewer": ("claude", "opus"),
+    }
+
+# Override for specific task types — respects Codex availability
+def _route_for_type(preferred: str) -> str:
+    """Return preferred model if available, else fallback to claude."""
+    if preferred == "codex" and not _CODEX_AVAILABLE:
+        return "claude"
+    return preferred
+
 TASK_TYPE_ROUTING = {
-    "code_generation": "codex",
-    "refactoring": "codex",
-    "test_writing": "codex",
-    "implementation": "codex",
-    "code_review": "codex",          # Codex is good at code review too
+    "code_generation": _route_for_type("codex"),
+    "refactoring": _route_for_type("codex"),
+    "test_writing": _route_for_type("codex"),
+    "implementation": _route_for_type("codex"),
+    "code_review": _route_for_type("codex"),
     "security_scan": "claude",
     "architecture": "claude",
     "research": "claude",
@@ -80,6 +122,7 @@ QA_LEVEL_DOWN = {
     "opus": "sonnet",
     "sonnet": "haiku",
     "haiku": "haiku",
+    "gpt-5.4": "o4-mini",
     "o3": "o4-mini",
     "o4-mini": "o4-mini",
     "gpt-4.1": "o4-mini",
@@ -104,6 +147,7 @@ def _get_reasoning_depth(level: str) -> str:
         "haiku": "Be concise. One-pass solution. Skip edge cases unless obvious.",
         "sonnet": "Standard depth. Cover main cases. Note edge cases but don't over-engineer.",
         "opus": "Deep analysis. Consider edge cases, failure modes, alternatives. Be thorough.",
+        "gpt-5.4": "Full-capability implementation. Leverage deep understanding for correctness, style, and completeness.",
         "o4-mini": "Efficient implementation. Focus on correctness and clean code.",
         "o3": "Thorough implementation with edge case handling and optimization.",
         "gpt-4.1": "Comprehensive implementation with full test coverage.",
@@ -380,8 +424,9 @@ def execute_dispatch(
 
     try:
         if model_cli == "claude":
-            # claude -p reads from stdin
-            cmd = [binary, "-p"]
+            # claude -p reads from stdin, with configured permission mode
+            perm_mode = _DISPATCH_CONFIG.get("permission_mode", "bypassPermissions")
+            cmd = [binary, "-p", "--permission-mode", perm_mode]
             if level in config["models"]:
                 cmd.extend(["--model", config["models"][level]])
             result = subprocess.run(
@@ -486,7 +531,7 @@ def get_available_models() -> dict[str, Any]:
                 version = r.stdout.strip().splitlines()[0] if r.stdout.strip() else ""
             except Exception:
                 pass
-        result[name] = {
+        entry = {
             "installed": installed,
             "binary": binary,
             "path": shutil.which(binary),
@@ -494,6 +539,10 @@ def get_available_models() -> dict[str, Any]:
             "strengths": config["strengths"],
             "models": list(config["models"].keys()),
         }
+        if not installed and name == "codex":
+            entry["fallback"] = "claude"
+            entry["note"] = "Codex not installed — all execution tasks routed to Claude"
+        result[name] = entry
     return result
 
 
@@ -509,7 +558,7 @@ def route_task_to_model(task_type: str, agent_role: str) -> tuple[str, str]:
         cli = model_override
         # Use appropriate level for the CLI
         if cli == "codex":
-            level = "o4-mini"
+            level = "gpt-5.4"
         else:
             level = agent_default_level
     else:

@@ -108,6 +108,17 @@ class AppContext:
 @asynccontextmanager
 async def lifespan(server):
     ctx = AppContext()
+
+    # Check first-run setup
+    config_path = SERVER_DIR / "config.json"
+    if not config_path.exists():
+        import sys
+        print(
+            "[systems-orchestrator] First run detected. "
+            f"Run: python3 {SERVER_DIR / 'setup.py'} to configure.",
+            file=sys.stderr,
+        )
+
     ctx.index = build_index()
     # Load tool outcomes if available
     try:
@@ -171,7 +182,7 @@ REWORK requires log_failure() first — enforced by gate.
 Never skip a step. Never start implementation before the plan exists.
 
 == MODEL ROUTING ==
-Code generation, refactoring, tests → Codex (dispatch routes executor to codex/o4-mini)
+Code generation, refactoring, tests → Codex (dispatch routes executor to codex/gpt-5.4)
 Reasoning, planning, QA, review → Claude (dispatch routes planner/verifier/reviewer to claude)
 
 == CREATING NEW SKILLS/AGENTS ==

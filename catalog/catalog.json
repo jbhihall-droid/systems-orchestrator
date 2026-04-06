@@ -4,7 +4,7 @@
     "type": "cli",
     "binary": "nmap",
     "category": "security/scanning",
-    "description": "Network scanner \u2014 port discovery, service/OS detection, NSE vulnerability scripts",
+    "description": "Network scanner — port discovery, service/OS detection, NSE vulnerability scripts",
     "capabilities": [
       "port-scan",
       "service-detect",
@@ -89,7 +89,7 @@
     "type": "cli",
     "binary": "masscan",
     "category": "security/scanning",
-    "description": "Fastest port scanner \u2014 millions of packets/sec for subnet-wide sweeps",
+    "description": "Fastest port scanner — millions of packets/sec for subnet-wide sweeps",
     "capabilities": [
       "port-scan",
       "mass-scan",
@@ -134,6 +134,17 @@
       "port-scan",
       "subnet-sweep",
       "test"
+    ],
+    "use_when": [
+      "fast port scan",
+      "scan entire subnet",
+      "mass port discovery",
+      "sweep large IP ranges"
+    ],
+    "do_not_use_when": [
+      "service version detection",
+      "OS fingerprinting",
+      "need detailed scan"
     ]
   },
   {
@@ -141,7 +152,7 @@
     "type": "cli",
     "binary": "aircrack-ng",
     "category": "security/wireless",
-    "description": "WPA/WPA2 handshake cracker \u2014 dictionary and brute force attacks on captured handshakes",
+    "description": "WPA/WPA2 handshake cracker — dictionary and brute force attacks on captured handshakes",
     "capabilities": [
       "wpa-crack",
       "handshake-crack",
@@ -206,7 +217,7 @@
     "type": "cli",
     "binary": "airodump-ng",
     "category": "security/wireless",
-    "description": "WiFi network scanner \u2014 captures APs, clients, signal strength, handshakes",
+    "description": "WiFi network scanner — captures APs, clients, signal strength, handshakes",
     "capabilities": [
       "wifi-scan",
       "handshake-capture",
@@ -249,6 +260,16 @@
       "handshake-capture",
       "observe",
       "wifi-scan"
+    ],
+    "use_when": [
+      "scan WiFi networks",
+      "capture handshake",
+      "find access points",
+      "detect WiFi clients"
+    ],
+    "do_not_use_when": [
+      "wired network",
+      "web application scan"
     ]
   },
   {
@@ -256,7 +277,7 @@
     "type": "cli",
     "binary": "aireplay-ng",
     "category": "security/wireless",
-    "description": "WiFi injection \u2014 deauth, fake auth, ARP replay to force handshake captures",
+    "description": "WiFi injection — deauth, fake auth, ARP replay to force handshake captures",
     "capabilities": [
       "deauth",
       "injection",
@@ -279,8 +300,9 @@
       "observe"
     ],
     "inputs": [
-      "ip",
-      "hostname"
+      "interface",
+      "bssid",
+      "client-mac"
     ],
     "outputs": [
       "report"
@@ -289,8 +311,9 @@
       "security/wireless"
     ],
     "element_types": [
-      "ip",
-      "hostname"
+      "interface",
+      "bssid",
+      "client-mac"
     ],
     "tags": [
       "deauth",
@@ -298,6 +321,16 @@
       "injection",
       "observe",
       "replay"
+    ],
+    "use_when": [
+      "deauth WiFi client",
+      "force handshake capture",
+      "WiFi injection attack",
+      "replay ARP packets"
+    ],
+    "do_not_use_when": [
+      "passive scanning",
+      "wired network"
     ]
   },
   {
@@ -305,7 +338,7 @@
     "type": "cli",
     "binary": "kismet",
     "category": "security/wireless",
-    "description": "Wireless IDS and passive scanner \u2014 WiFi, BT, Zigbee, SDR with REST API",
+    "description": "Wireless IDS and passive scanner — WiFi, BT, Zigbee, SDR with REST API",
     "capabilities": [
       "wifi-scan",
       "bluetooth-scan",
@@ -352,6 +385,17 @@
       "passive-recon",
       "wids",
       "wifi-scan"
+    ],
+    "use_when": [
+      "passive WiFi recon",
+      "wireless IDS",
+      "bluetooth scanning",
+      "device tracking",
+      "SDR monitoring"
+    ],
+    "do_not_use_when": [
+      "active scanning",
+      "web application testing"
     ]
   },
   {
@@ -359,7 +403,7 @@
     "type": "cli",
     "binary": "hashcat",
     "category": "security/cracking",
-    "description": "GPU-accelerated password cracker \u2014 WPA, NTLM, MD5, SHA, bcrypt, and 300+ hash types",
+    "description": "GPU-accelerated password cracker — WPA, NTLM, MD5, SHA, bcrypt, and 300+ hash types",
     "capabilities": [
       "password-crack",
       "gpu-crack",
@@ -409,6 +453,17 @@
       "rule-based-attack",
       "test",
       "wpa-crack"
+    ],
+    "use_when": [
+      "crack password hash",
+      "GPU password cracking",
+      "WPA handshake crack",
+      "NTLM hash crack",
+      "brute force hash"
+    ],
+    "do_not_use_when": [
+      "online brute force",
+      "network login attack"
     ]
   },
   {
@@ -416,7 +471,7 @@
     "type": "cli",
     "binary": "john",
     "category": "security/cracking",
-    "description": "CPU password cracker \u2014 flexible format support, custom rules, good for shadow files",
+    "description": "CPU password cracker — flexible format support, custom rules, good for shadow files",
     "capabilities": [
       "password-crack",
       "shadow-crack",
@@ -460,6 +515,16 @@
       "test",
       "transform",
       "zip-crack"
+    ],
+    "use_when": [
+      "crack shadow file",
+      "CPU password crack",
+      "crack ZIP password",
+      "crack SSH key passphrase"
+    ],
+    "do_not_use_when": [
+      "need GPU acceleration",
+      "mass hash cracking"
     ]
   },
   {
@@ -467,7 +532,7 @@
     "type": "cli",
     "binary": "hydra",
     "category": "security/cracking",
-    "description": "Online brute forcer \u2014 SSH, FTP, HTTP, SMB, RDP, MySQL login cracking",
+    "description": "Online brute forcer — SSH, FTP, HTTP, SMB, RDP, MySQL login cracking",
     "capabilities": [
       "brute-force",
       "ssh-brute",
@@ -513,6 +578,17 @@
       "ssh-brute",
       "test",
       "web-brute"
+    ],
+    "use_when": [
+      "brute force SSH login",
+      "brute force web login",
+      "online credential attack",
+      "credential spraying",
+      "FTP brute force"
+    ],
+    "do_not_use_when": [
+      "offline hash cracking",
+      "need to crack captured hashes"
     ]
   },
   {
@@ -520,7 +596,7 @@
     "type": "cli",
     "binary": "msfconsole",
     "category": "security/exploitation",
-    "description": "Exploitation framework \u2014 2000+ exploits, payloads, post-exploitation, pivoting",
+    "description": "Exploitation framework — 2000+ exploits, payloads, post-exploitation, pivoting",
     "capabilities": [
       "exploit",
       "payload",
@@ -567,6 +643,17 @@
       "post-exploit",
       "reverse-shell",
       "test"
+    ],
+    "use_when": [
+      "exploit vulnerability",
+      "generate payload",
+      "post-exploitation",
+      "reverse shell",
+      "pivot through network"
+    ],
+    "do_not_use_when": [
+      "passive recon only",
+      "static code analysis"
     ]
   },
   {
@@ -574,7 +661,7 @@
     "type": "cli",
     "binary": "bettercap",
     "category": "security/mitm",
-    "description": "Network attack toolkit \u2014 ARP spoof, DNS spoof, HTTPS proxy, WiFi deauth, BLE recon",
+    "description": "Network attack toolkit — ARP spoof, DNS spoof, HTTPS proxy, WiFi deauth, BLE recon",
     "capabilities": [
       "arp-spoof",
       "dns-spoof",
@@ -625,6 +712,18 @@
       "ssl-strip",
       "test",
       "wifi-deauth"
+    ],
+    "use_when": [
+      "ARP spoofing",
+      "DNS spoofing",
+      "man-in-the-middle attack",
+      "WiFi deauth",
+      "BLE scanning",
+      "credential sniffing"
+    ],
+    "do_not_use_when": [
+      "passive monitoring only",
+      "web application testing"
     ]
   },
   {
@@ -632,7 +731,7 @@
     "type": "cli",
     "binary": "ettercap",
     "category": "security/mitm",
-    "description": "MITM attack suite \u2014 ARP poisoning, DNS spoofing, credential sniffing",
+    "description": "MITM attack suite — ARP poisoning, DNS spoofing, credential sniffing",
     "capabilities": [
       "arp-poison",
       "mitm",
@@ -676,6 +775,16 @@
       "mitm",
       "observe",
       "test"
+    ],
+    "use_when": [
+      "ARP poisoning",
+      "MITM attack",
+      "credential sniffing",
+      "DNS spoofing on LAN"
+    ],
+    "do_not_use_when": [
+      "WiFi attacks",
+      "web application testing"
     ]
   },
   {
@@ -683,7 +792,7 @@
     "type": "cli",
     "binary": "responder",
     "category": "security/mitm",
-    "description": "LLMNR/NBT-NS/MDNS poisoner \u2014 captures NTLMv2 hashes from Windows name resolution",
+    "description": "LLMNR/NBT-NS/MDNS poisoner — captures NTLMv2 hashes from Windows name resolution",
     "capabilities": [
       "llmnr-poison",
       "ntlm-capture",
@@ -728,6 +837,17 @@
       "observe",
       "test",
       "wpad-poison"
+    ],
+    "use_when": [
+      "capture NTLM hashes",
+      "LLMNR poisoning",
+      "NBT-NS poisoning",
+      "WPAD attack",
+      "Windows credential capture"
+    ],
+    "do_not_use_when": [
+      "non-Windows network",
+      "web application testing"
     ]
   },
   {
@@ -735,7 +855,7 @@
     "type": "cli",
     "binary": "wireshark",
     "category": "security/forensics",
-    "description": "Packet analyzer GUI \u2014 deep protocol inspection for any capture file",
+    "description": "Packet analyzer GUI — deep protocol inspection for any capture file",
     "capabilities": [
       "packet-analysis",
       "protocol-decode",
@@ -777,6 +897,16 @@
       "pcap-read",
       "protocol-decode",
       "stream-follow"
+    ],
+    "use_when": [
+      "analyze packets GUI",
+      "inspect pcap file",
+      "deep protocol analysis",
+      "follow TCP stream"
+    ],
+    "do_not_use_when": [
+      "need CLI packet analysis",
+      "scripted analysis"
     ]
   },
   {
@@ -784,7 +914,7 @@
     "type": "cli",
     "binary": "tshark",
     "category": "security/forensics",
-    "description": "CLI packet analyzer \u2014 extract fields, filter protocols, process captures in scripts",
+    "description": "CLI packet analyzer — extract fields, filter protocols, process captures in scripts",
     "capabilities": [
       "packet-capture",
       "protocol-decode",
@@ -831,6 +961,17 @@
       "observe",
       "packet-capture",
       "protocol-decode"
+    ],
+    "use_when": [
+      "CLI packet capture",
+      "extract fields from pcap",
+      "filter packets",
+      "script packet analysis",
+      "extract DNS queries"
+    ],
+    "do_not_use_when": [
+      "need visual GUI analysis",
+      "interactive inspection"
     ]
   },
   {
@@ -838,7 +979,7 @@
     "type": "cli",
     "binary": "tcpdump",
     "category": "security/forensics",
-    "description": "Low-level packet capture \u2014 lightweight, good for long-running captures and feeding other tools",
+    "description": "Low-level packet capture — lightweight, good for long-running captures and feeding other tools",
     "capabilities": [
       "packet-capture",
       "pcap-write",
@@ -879,6 +1020,16 @@
       "observe",
       "packet-capture",
       "pcap-write"
+    ],
+    "use_when": [
+      "quick packet capture",
+      "lightweight packet sniff",
+      "capture traffic to file",
+      "live traffic debug"
+    ],
+    "do_not_use_when": [
+      "need deep protocol decode",
+      "need field extraction"
     ]
   },
   {
@@ -886,7 +1037,7 @@
     "type": "cli",
     "binary": "p0f",
     "category": "security/recon",
-    "description": "Passive OS fingerprinting \u2014 identifies OS from TCP SYN packets without sending anything",
+    "description": "Passive OS fingerprinting — identifies OS from TCP SYN packets without sending anything",
     "capabilities": [
       "os-fingerprint",
       "passive-recon",
@@ -925,6 +1076,15 @@
       "observe",
       "os-fingerprint",
       "passive-recon"
+    ],
+    "use_when": [
+      "passive OS fingerprinting",
+      "identify OS from traffic",
+      "stealthy host identification"
+    ],
+    "do_not_use_when": [
+      "active scanning OK",
+      "need service detection"
     ]
   },
   {
@@ -932,7 +1092,7 @@
     "type": "cli",
     "binary": "nikto",
     "category": "security/scanning",
-    "description": "Web server scanner \u2014 misconfigs, default files, outdated versions, dangerous methods",
+    "description": "Web server scanner — misconfigs, default files, outdated versions, dangerous methods",
     "capabilities": [
       "web-scan",
       "vuln-scan",
@@ -991,7 +1151,7 @@
     "type": "cli",
     "binary": "sqlmap",
     "category": "security/exploitation",
-    "description": "SQL injection automation \u2014 detect and exploit SQLi in web apps, dump databases",
+    "description": "SQL injection automation — detect and exploit SQLi in web apps, dump databases",
     "capabilities": [
       "sqli",
       "database-dump",
@@ -1032,6 +1192,16 @@
       "sqli",
       "test",
       "web-exploit"
+    ],
+    "use_when": [
+      "SQL injection test",
+      "database enumeration",
+      "exploit SQLi vulnerability",
+      "dump database tables"
+    ],
+    "do_not_use_when": [
+      "no web application",
+      "network scanning"
     ]
   },
   {
@@ -1039,7 +1209,7 @@
     "type": "cli",
     "binary": "reaver",
     "category": "security/wireless",
-    "description": "WPS PIN brute force attack \u2014 cracks WPS-enabled routers",
+    "description": "WPS PIN brute force attack — cracks WPS-enabled routers",
     "capabilities": [
       "wps-crack",
       "wps-brute"
@@ -1078,6 +1248,15 @@
       "test",
       "wps-brute",
       "wps-crack"
+    ],
+    "use_when": [
+      "WPS brute force",
+      "crack WPS PIN",
+      "recover WPA via WPS"
+    ],
+    "do_not_use_when": [
+      "WPS not enabled",
+      "no WiFi interface"
     ]
   },
   {
@@ -1085,7 +1264,7 @@
     "type": "cli",
     "binary": "bully",
     "category": "security/wireless",
-    "description": "WPS attack tool \u2014 Pixie Dust and brute force, alternative to reaver",
+    "description": "WPS attack tool — Pixie Dust and brute force, alternative to reaver",
     "capabilities": [
       "wps-crack",
       "pixie-dust",
@@ -1126,6 +1305,15 @@
       "test",
       "wps-brute",
       "wps-crack"
+    ],
+    "use_when": [
+      "WPS Pixie Dust attack",
+      "WPS PIN brute force",
+      "alternative WPS cracker"
+    ],
+    "do_not_use_when": [
+      "WPS not enabled",
+      "need handshake attack"
     ]
   },
   {
@@ -1133,7 +1321,7 @@
     "type": "cli",
     "binary": "wifite",
     "category": "security/wireless",
-    "description": "Automated WiFi auditor \u2014 WPA, WPS, WEP attacks with minimal interaction",
+    "description": "Automated WiFi auditor — WPA, WPS, WEP attacks with minimal interaction",
     "capabilities": [
       "wifi-audit",
       "auto-attack",
@@ -1174,6 +1362,15 @@
       "observe",
       "wifi-audit",
       "wps-crack"
+    ],
+    "use_when": [
+      "automated WiFi cracking",
+      "batch WiFi attack",
+      "quick WPA crack"
+    ],
+    "do_not_use_when": [
+      "need fine control",
+      "specific attack technique"
     ]
   },
   {
@@ -1181,7 +1378,7 @@
     "type": "cli",
     "binary": "macchanger",
     "category": "security/evasion",
-    "description": "MAC address spoofer \u2014 randomize or set specific MAC addresses",
+    "description": "MAC address spoofer — randomize or set specific MAC addresses",
     "capabilities": [
       "mac-spoof",
       "mac-randomize"
@@ -1217,6 +1414,15 @@
       "mac-randomize",
       "mac-spoof",
       "transform"
+    ],
+    "use_when": [
+      "change MAC address",
+      "spoof MAC",
+      "anonymize network interface"
+    ],
+    "do_not_use_when": [
+      "not doing wireless",
+      "no need for anonymity"
     ]
   },
   {
@@ -1262,6 +1468,15 @@
       "proxy",
       "tor-route",
       "transform"
+    ],
+    "use_when": [
+      "route traffic through proxy",
+      "anonymize connections",
+      "pivot through compromised host"
+    ],
+    "do_not_use_when": [
+      "direct connection is fine",
+      "no proxy needed"
     ]
   },
   {
@@ -1269,7 +1484,7 @@
     "type": "cli",
     "binary": "enum4linux",
     "category": "security/recon",
-    "description": "SMB/NetBIOS enumeration \u2014 users, shares, policies, groups from Windows/Samba",
+    "description": "SMB/NetBIOS enumeration — users, shares, policies, groups from Windows/Samba",
     "capabilities": [
       "smb-enum",
       "user-enum",
@@ -1308,6 +1523,16 @@
       "share-enum",
       "smb-enum",
       "user-enum"
+    ],
+    "use_when": [
+      "enumerate SMB shares",
+      "enumerate Windows users",
+      "SMB recon",
+      "Active Directory enumeration"
+    ],
+    "do_not_use_when": [
+      "no SMB/Windows targets",
+      "web application testing"
     ]
   },
   {
@@ -1315,7 +1540,7 @@
     "type": "cli",
     "binary": "smbclient",
     "category": "security/recon",
-    "description": "SMB file share client \u2014 browse, upload, download from Windows shares",
+    "description": "SMB file share client — browse, upload, download from Windows shares",
     "capabilities": [
       "smb-connect",
       "file-transfer",
@@ -1353,6 +1578,16 @@
       "observe",
       "share-browse",
       "smb-connect"
+    ],
+    "use_when": [
+      "connect to SMB share",
+      "browse Windows shares",
+      "download files from share",
+      "upload to SMB"
+    ],
+    "do_not_use_when": [
+      "no SMB service",
+      "need enumeration only"
     ]
   },
   {
@@ -1360,7 +1595,7 @@
     "type": "cli",
     "binary": "hcitool",
     "category": "security/bluetooth",
-    "description": "Bluetooth scanner \u2014 discover devices, query names, classes, services",
+    "description": "Bluetooth scanner — discover devices, query names, classes, services",
     "capabilities": [
       "bt-scan",
       "bt-discover",
@@ -1398,6 +1633,16 @@
       "bt-info",
       "bt-scan",
       "observe"
+    ],
+    "use_when": [
+      "scan bluetooth devices",
+      "BLE device discovery",
+      "bluetooth recon",
+      "HCI interface control"
+    ],
+    "do_not_use_when": [
+      "no bluetooth adapter",
+      "WiFi only"
     ]
   },
   {
@@ -1405,7 +1650,7 @@
     "type": "cli",
     "binary": "sslscan",
     "category": "security/scanning",
-    "description": "TLS/SSL scanner \u2014 cipher suites, certificate details, protocol versions, vulnerabilities",
+    "description": "TLS/SSL scanner — cipher suites, certificate details, protocol versions, vulnerabilities",
     "capabilities": [
       "ssl-scan",
       "tls-audit",
@@ -1445,6 +1690,16 @@
       "observe",
       "ssl-scan",
       "tls-audit"
+    ],
+    "use_when": [
+      "test SSL/TLS configuration",
+      "check cipher suites",
+      "find SSL vulnerabilities",
+      "certificate inspection"
+    ],
+    "do_not_use_when": [
+      "no HTTPS service",
+      "application-level testing"
     ]
   },
   {
@@ -1452,7 +1707,7 @@
     "type": "cli",
     "binary": "strace",
     "category": "security/forensics",
-    "description": "System call tracer \u2014 trace what a process does at the kernel level",
+    "description": "System call tracer — trace what a process does at the kernel level",
     "capabilities": [
       "syscall-trace",
       "debug",
@@ -1485,6 +1740,16 @@
       "observe",
       "process-monitor",
       "syscall-trace"
+    ],
+    "use_when": [
+      "trace system calls",
+      "debug process behavior",
+      "monitor file access",
+      "diagnose crashes"
+    ],
+    "do_not_use_when": [
+      "high-level debugging",
+      "code review"
     ]
   },
   {
@@ -1492,7 +1757,7 @@
     "type": "cli",
     "binary": "binwalk",
     "category": "security/forensics",
-    "description": "Firmware analysis \u2014 extract filesystems, detect embedded files, entropy analysis",
+    "description": "Firmware analysis — extract filesystems, detect embedded files, entropy analysis",
     "capabilities": [
       "firmware-extract",
       "file-carve",
@@ -1529,6 +1794,16 @@
       "file-carve",
       "firmware-extract",
       "observe"
+    ],
+    "use_when": [
+      "analyze firmware",
+      "extract embedded files",
+      "reverse engineer binary",
+      "find hidden data in files"
+    ],
+    "do_not_use_when": [
+      "source code analysis",
+      "web application testing"
     ]
   },
   {
@@ -1536,7 +1811,7 @@
     "type": "cli",
     "binary": "foremost",
     "category": "security/forensics",
-    "description": "File carver \u2014 recover deleted files from disk images or raw data",
+    "description": "File carver — recover deleted files from disk images or raw data",
     "capabilities": [
       "file-carve",
       "data-recovery"
@@ -1570,6 +1845,15 @@
       "data-recovery",
       "file-carve",
       "observe"
+    ],
+    "use_when": [
+      "recover deleted files",
+      "carve files from disk image",
+      "forensic file recovery"
+    ],
+    "do_not_use_when": [
+      "file is not deleted",
+      "live system analysis"
     ]
   },
   {
@@ -1577,7 +1861,7 @@
     "type": "cli",
     "binary": "exiftool",
     "category": "security/recon",
-    "description": "Metadata extractor \u2014 read/write EXIF, GPS, camera info from images and documents",
+    "description": "Metadata extractor — read/write EXIF, GPS, camera info from images and documents",
     "capabilities": [
       "metadata-extract",
       "exif-read",
@@ -1613,6 +1897,16 @@
       "gps-extract",
       "metadata-extract",
       "observe"
+    ],
+    "use_when": [
+      "read image metadata",
+      "extract EXIF data",
+      "analyze file metadata",
+      "strip metadata"
+    ],
+    "do_not_use_when": [
+      "binary analysis",
+      "network forensics"
     ]
   },
   {
@@ -1651,6 +1945,15 @@
       "file-view",
       "syntax-highlight",
       "transform"
+    ],
+    "use_when": [
+      "view file with syntax highlighting",
+      "better cat replacement",
+      "colored file output"
+    ],
+    "do_not_use_when": [
+      "piping to other commands",
+      "need plain output"
     ]
   },
   {
@@ -1658,7 +1961,7 @@
     "type": "cli",
     "binary": "fdfind",
     "category": "development/cli",
-    "description": "find replacement \u2014 faster, simpler syntax, respects .gitignore",
+    "description": "find replacement — faster, simpler syntax, respects .gitignore",
     "capabilities": [
       "file-find",
       "file-search"
@@ -1713,7 +2016,7 @@
     "type": "cli",
     "binary": "rg",
     "category": "development/cli",
-    "description": "grep replacement \u2014 fastest code search, respects .gitignore, regex support",
+    "description": "grep replacement — fastest code search, respects .gitignore, regex support",
     "capabilities": [
       "code-search",
       "grep",
@@ -1748,6 +2051,16 @@
       "regex-search",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "fast code search",
+      "search file contents",
+      "grep replacement",
+      "regex search codebase"
+    ],
+    "do_not_use_when": [
+      "search by filename",
+      "binary file search"
     ]
   },
   {
@@ -1755,7 +2068,7 @@
     "type": "cli",
     "binary": "fzf",
     "category": "development/cli",
-    "description": "Fuzzy finder \u2014 interactive filtering for any list (files, history, processes, git branches)",
+    "description": "Fuzzy finder — interactive filtering for any list (files, history, processes, git branches)",
     "capabilities": [
       "fuzzy-find",
       "interactive-filter"
@@ -1789,6 +2102,15 @@
       "interactive-filter",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "fuzzy find files",
+      "interactive selection",
+      "filter command output"
+    ],
+    "do_not_use_when": [
+      "exact match needed",
+      "scripted non-interactive"
     ]
   },
   {
@@ -1828,6 +2150,15 @@
       "git-diff",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "better git diff",
+      "syntax-highlighted diff",
+      "side-by-side diff"
+    ],
+    "do_not_use_when": [
+      "need machine-readable diff",
+      "scripted diff"
     ]
   },
   {
@@ -1835,7 +2166,7 @@
     "type": "cli",
     "binary": "eza",
     "category": "development/cli",
-    "description": "ls replacement \u2014 icons, git status, tree view, color-coded permissions",
+    "description": "ls replacement — icons, git status, tree view, color-coded permissions",
     "capabilities": [
       "file-list",
       "tree-view"
@@ -1866,6 +2197,15 @@
       "file-list",
       "transform",
       "tree-view"
+    ],
+    "use_when": [
+      "list files with icons",
+      "better ls replacement",
+      "tree view with git status"
+    ],
+    "do_not_use_when": [
+      "need plain ls output",
+      "scripting"
     ]
   },
   {
@@ -1873,7 +2213,7 @@
     "type": "cli",
     "binary": "dust",
     "category": "development/cli",
-    "description": "Disk usage analyzer \u2014 shows which directories and files consume the most space, visualized as a tree",
+    "description": "Disk usage analyzer — shows which directories and files consume the most space, visualized as a tree",
     "capabilities": [
       "disk-usage",
       "directory-size",
@@ -1909,6 +2249,15 @@
       "measure",
       "observe",
       "space-analysis"
+    ],
+    "use_when": [
+      "disk usage analysis",
+      "find large directories",
+      "better du replacement"
+    ],
+    "do_not_use_when": [
+      "need exact byte counts",
+      "scripted disk check"
     ]
   },
   {
@@ -1916,7 +2265,7 @@
     "type": "cli",
     "binary": "procs",
     "category": "development/cli",
-    "description": "ps replacement \u2014 color-coded, searchable process list with tree view",
+    "description": "ps replacement — color-coded, searchable process list with tree view",
     "capabilities": [
       "process-list",
       "process-search"
@@ -1947,6 +2296,15 @@
       "process-list",
       "process-search",
       "transform"
+    ],
+    "use_when": [
+      "list processes",
+      "better ps replacement",
+      "find processes by name"
+    ],
+    "do_not_use_when": [
+      "need standard ps output",
+      "scripting"
     ]
   },
   {
@@ -1954,7 +2312,7 @@
     "type": "cli",
     "binary": "zoxide",
     "category": "development/cli",
-    "description": "cd replacement \u2014 learns your habits, jump to frecent directories",
+    "description": "cd replacement — learns your habits, jump to frecent directories",
     "capabilities": [
       "smart-cd",
       "directory-jump"
@@ -1985,6 +2343,15 @@
       "directory-jump",
       "smart-cd",
       "transform"
+    ],
+    "use_when": [
+      "smart directory navigation",
+      "cd replacement",
+      "jump to frequent directories"
+    ],
+    "do_not_use_when": [
+      "need exact cd path",
+      "scripting"
     ]
   },
   {
@@ -1992,7 +2359,7 @@
     "type": "cli",
     "binary": "tokei",
     "category": "development/cli",
-    "description": "Count lines of code by language \u2014 fast, accurate, handles comments vs code",
+    "description": "Count lines of code by language — fast, accurate, handles comments vs code",
     "capabilities": [
       "loc-count",
       "code-stats"
@@ -2023,6 +2390,15 @@
       "code-stats",
       "loc-count",
       "transform"
+    ],
+    "use_when": [
+      "count lines of code",
+      "code statistics",
+      "language breakdown"
+    ],
+    "do_not_use_when": [
+      "need file content",
+      "code search"
     ]
   },
   {
@@ -2030,7 +2406,7 @@
     "type": "cli",
     "binary": "gping",
     "category": "network/monitoring",
-    "description": "Ping with real-time graph \u2014 monitor latency visually over time",
+    "description": "Ping with real-time graph — monitor latency visually over time",
     "capabilities": [
       "ping",
       "latency-graph"
@@ -2065,6 +2441,15 @@
       "measure",
       "observe",
       "ping"
+    ],
+    "use_when": [
+      "visual ping graph",
+      "monitor latency",
+      "compare ping to multiple hosts"
+    ],
+    "do_not_use_when": [
+      "need standard ping output",
+      "scripted monitoring"
     ]
   },
   {
@@ -2072,7 +2457,7 @@
     "type": "cli",
     "binary": "hyperfine",
     "category": "development/cli",
-    "description": "CLI benchmarking \u2014 run commands N times, show stats, compare alternatives",
+    "description": "CLI benchmarking — run commands N times, show stats, compare alternatives",
     "capabilities": [
       "benchmark",
       "timing"
@@ -2105,6 +2490,15 @@
       "measure",
       "timing",
       "transform"
+    ],
+    "use_when": [
+      "benchmark commands",
+      "compare execution times",
+      "measure command performance"
+    ],
+    "do_not_use_when": [
+      "simple timing",
+      "application profiling"
     ]
   },
   {
@@ -2112,7 +2506,7 @@
     "type": "cli",
     "binary": "ruff",
     "category": "development/python",
-    "description": "Python linter+formatter \u2014 replaces flake8, black, isort in one tool, 100x faster",
+    "description": "Python linter+formatter — replaces flake8, black, isort in one tool, 100x faster",
     "capabilities": [
       "python-lint",
       "python-format",
@@ -2148,13 +2542,23 @@
       "python-format",
       "python-lint",
       "transform"
+    ],
+    "use_when": [
+      "Python linting",
+      "fast Python formatter",
+      "Python code quality check",
+      "replace flake8/isort"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "type checking"
     ]
   },
   {
     "name": "playwright",
     "type": "mcp",
     "category": "testing/browser",
-    "description": "Browser automation MCP \u2014 navigate, click, fill forms, take screenshots, evaluate JS",
+    "description": "Browser automation MCP — navigate, click, fill forms, take screenshots, evaluate JS",
     "capabilities": [
       "browser-test",
       "screenshot",
@@ -2204,13 +2608,24 @@
       "observe",
       "screenshot",
       "test"
+    ],
+    "use_when": [
+      "browser automation",
+      "test web UI",
+      "take screenshot",
+      "fill web form",
+      "evaluate JavaScript in browser"
+    ],
+    "do_not_use_when": [
+      "no browser needed",
+      "API-only testing"
     ]
   },
   {
     "name": "github-mcp",
     "type": "mcp",
     "category": "development/git",
-    "description": "GitHub API MCP \u2014 issues, PRs, repos, code search, actions",
+    "description": "GitHub API MCP — issues, PRs, repos, code search, actions",
     "capabilities": [
       "github-api",
       "issue-manage",
@@ -2249,13 +2664,23 @@
       "observe",
       "pr-manage",
       "transform"
+    ],
+    "use_when": [
+      "manage GitHub issues",
+      "create pull request",
+      "search GitHub code",
+      "list commits"
+    ],
+    "do_not_use_when": [
+      "local git only",
+      "no GitHub repo"
     ]
   },
   {
     "name": "figma-mcp",
     "type": "mcp",
     "category": "development/frontend",
-    "description": "Figma design MCP \u2014 read designs, get screenshots, code connect, generate diagrams",
+    "description": "Figma design MCP — read designs, get screenshots, code connect, generate diagrams",
     "capabilities": [
       "design-read",
       "screenshot",
@@ -2293,13 +2718,23 @@
       "diagram-generate",
       "screenshot",
       "transform"
+    ],
+    "use_when": [
+      "read Figma designs",
+      "design-to-code",
+      "get design screenshots",
+      "extract design tokens"
+    ],
+    "do_not_use_when": [
+      "no Figma designs",
+      "code-only project"
     ]
   },
   {
     "name": "deepwiki",
     "type": "mcp",
     "category": "development/general",
-    "description": "DeepWiki MCP \u2014 query documentation for any GitHub repo via SSE",
+    "description": "DeepWiki MCP — query documentation for any GitHub repo via SSE",
     "capabilities": [
       "repo-docs",
       "code-explain"
@@ -2326,13 +2761,22 @@
       "code-explain",
       "repo-docs",
       "transform"
+    ],
+    "use_when": [
+      "query repo documentation",
+      "understand GitHub project",
+      "explain open source code"
+    ],
+    "do_not_use_when": [
+      "local project docs",
+      "private repo"
     ]
   },
   {
     "name": "context7",
     "type": "plugin",
     "category": "development/general",
-    "description": "Fetch current docs for any library/framework \u2014 React, Django, Express, etc.",
+    "description": "Fetch current docs for any library/framework — React, Django, Express, etc.",
     "capabilities": [
       "library-docs",
       "api-docs",
@@ -2361,13 +2805,22 @@
       "framework-docs",
       "library-docs",
       "transform"
+    ],
+    "use_when": [
+      "get library documentation",
+      "API reference lookup",
+      "framework docs in context"
+    ],
+    "do_not_use_when": [
+      "general web search",
+      "no specific library"
     ]
   },
   {
     "name": "serena",
     "type": "plugin",
     "category": "development/general",
-    "description": "Semantic code tools \u2014 symbol search, find references, rename, read symbol bodies",
+    "description": "Semantic code tools — symbol search, find references, rename, read symbol bodies",
     "capabilities": [
       "symbol-search",
       "find-references",
@@ -2400,13 +2853,23 @@
       "rename-symbol",
       "symbol-search",
       "transform"
+    ],
+    "use_when": [
+      "find symbol definitions",
+      "code references",
+      "structural rename",
+      "code intelligence"
+    ],
+    "do_not_use_when": [
+      "text search",
+      "grep-style search"
     ]
   },
   {
     "name": "pr-review-toolkit",
     "type": "plugin",
     "category": "development/review",
-    "description": "PR review agents \u2014 code review, test coverage, type design, silent failure detection",
+    "description": "PR review agents — code review, test coverage, type design, silent failure detection",
     "capabilities": [
       "code-review",
       "test-analysis",
@@ -2446,13 +2909,22 @@
       "test",
       "test-analysis",
       "type-review"
+    ],
+    "use_when": [
+      "review pull request",
+      "comprehensive PR review",
+      "PR quality check"
+    ],
+    "do_not_use_when": [
+      "no PR exists",
+      "simple code review"
     ]
   },
   {
     "name": "feature-dev",
     "type": "plugin",
     "category": "development/general",
-    "description": "Feature development agents \u2014 architect, explore codebase, review code",
+    "description": "Feature development agents — architect, explore codebase, review code",
     "capabilities": [
       "architecture-design",
       "codebase-explore",
@@ -2486,13 +2958,22 @@
       "codebase-explore",
       "feature-plan",
       "transform"
+    ],
+    "use_when": [
+      "guided feature development",
+      "architecture-focused feature",
+      "structured feature build"
+    ],
+    "do_not_use_when": [
+      "simple task",
+      "bug fix"
     ]
   },
   {
     "name": "superpowers",
     "type": "plugin",
     "category": "development/general",
-    "description": "Dev workflow skills \u2014 planning, TDD, debugging, git worktrees, subagent dispatch",
+    "description": "Dev workflow skills — planning, TDD, debugging, git worktrees, subagent dispatch",
     "capabilities": [
       "plan-write",
       "tdd",
@@ -2527,13 +3008,22 @@
       "subagent-dispatch",
       "tdd",
       "transform"
+    ],
+    "use_when": [
+      "enhanced Claude capabilities",
+      "advanced tool usage",
+      "power features"
+    ],
+    "do_not_use_when": [
+      "simple tasks",
+      "basic operations"
     ]
   },
   {
     "name": "hookify",
     "type": "plugin",
     "category": "development/general",
-    "description": "Create hooks to prevent unwanted behaviors \u2014 analyze conversations, generate rules",
+    "description": "Create hooks to prevent unwanted behaviors — analyze conversations, generate rules",
     "capabilities": [
       "hook-create",
       "behavior-prevent",
@@ -2564,13 +3054,22 @@
       "conversation-analyze",
       "hook-create",
       "transform"
+    ],
+    "use_when": [
+      "create hooks from conversation",
+      "prevent unwanted behaviors",
+      "automate rules"
+    ],
+    "do_not_use_when": [
+      "no behavior to prevent",
+      "manual control preferred"
     ]
   },
   {
     "name": "security-guidance",
     "type": "plugin",
     "category": "security/general",
-    "description": "Security engineering toolkit \u2014 threat modeling, STRIDE, OWASP, vuln analysis, pentest guidance",
+    "description": "Security engineering toolkit — threat modeling, STRIDE, OWASP, vuln analysis, pentest guidance",
     "capabilities": [
       "threat-model",
       "stride-analysis",
@@ -2608,13 +3107,21 @@
       "test",
       "threat-model",
       "vuln-analysis"
+    ],
+    "use_when": [
+      "security best practices",
+      "secure coding guidance",
+      "OWASP reference"
+    ],
+    "do_not_use_when": [
+      "not security related"
     ]
   },
   {
     "name": "frontend-design",
     "type": "plugin",
     "category": "development/frontend",
-    "description": "Production-grade frontend design \u2014 distinctive UI, avoids generic AI aesthetics",
+    "description": "Production-grade frontend design — distinctive UI, avoids generic AI aesthetics",
     "capabilities": [
       "ui-design",
       "component-build",
@@ -2643,6 +3150,16 @@
       "responsive-design",
       "transform",
       "ui-design"
+    ],
+    "use_when": [
+      "build web UI",
+      "frontend components",
+      "landing page design",
+      "dashboard layout"
+    ],
+    "do_not_use_when": [
+      "backend only",
+      "no UI"
     ]
   },
   {
@@ -2676,6 +3193,16 @@
       "analyze",
       "code-review",
       "pr-review"
+    ],
+    "use_when": [
+      "code review",
+      "PR review",
+      "code quality audit",
+      "review changes"
+    ],
+    "do_not_use_when": [
+      "no code to review",
+      "implementation task"
     ]
   },
   {
@@ -2709,13 +3236,22 @@
       "agent-build",
       "sdk-verify",
       "transform"
+    ],
+    "use_when": [
+      "build Agent SDK app",
+      "create Claude agent",
+      "setup SDK project"
+    ],
+    "do_not_use_when": [
+      "not building agents",
+      "using existing agent"
     ]
   },
   {
     "name": "huggingface-skills",
     "type": "plugin",
     "category": "data/ml",
-    "description": "HuggingFace tools \u2014 papers, datasets, model training, Gradio apps, Hub CLI",
+    "description": "HuggingFace tools — papers, datasets, model training, Gradio apps, Hub CLI",
     "capabilities": [
       "model-train",
       "dataset-browse",
@@ -2748,6 +3284,15 @@
       "model-train",
       "paper-search",
       "transform"
+    ],
+    "use_when": [
+      "HuggingFace integration",
+      "model deployment",
+      "ML pipeline"
+    ],
+    "do_not_use_when": [
+      "no ML needed",
+      "not HuggingFace"
     ]
   },
   {
@@ -2787,13 +3332,23 @@
       "dbt-run",
       "lineage-trace",
       "transform"
+    ],
+    "use_when": [
+      "data pipeline",
+      "ETL process",
+      "data transformation",
+      "data processing"
+    ],
+    "do_not_use_when": [
+      "no data processing",
+      "frontend work"
     ]
   },
   {
     "name": "terraform",
     "type": "plugin",
     "category": "infra/cloud",
-    "description": "Terraform registry integration \u2014 provider/module search, workspace management",
+    "description": "Terraform registry integration — provider/module search, workspace management",
     "capabilities": [
       "terraform-plan",
       "provider-search",
@@ -2822,6 +3377,16 @@
       "provider-search",
       "terraform-plan",
       "transform"
+    ],
+    "use_when": [
+      "infrastructure as code",
+      "provision cloud resources",
+      "manage Terraform state",
+      "deploy infrastructure"
+    ],
+    "do_not_use_when": [
+      "no cloud infrastructure",
+      "manual deployment"
     ]
   },
   {
@@ -2829,7 +3394,7 @@
     "type": "cli",
     "binary": "docker",
     "category": "infra/containers",
-    "description": "Container runtime \u2014 build, run, manage containers and images",
+    "description": "Container runtime — build, run, manage containers and images",
     "capabilities": [
       "container-run",
       "image-build",
@@ -2887,7 +3452,7 @@
     "type": "cli",
     "binary": "go",
     "category": "development/go",
-    "description": "Go compiler and tools \u2014 build, test, run Go programs",
+    "description": "Go compiler and tools — build, test, run Go programs",
     "capabilities": [
       "go-build",
       "go-test",
@@ -2923,6 +3488,14 @@
       "go-test",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "Go programming",
+      "build Go project",
+      "Go module management"
+    ],
+    "do_not_use_when": [
+      "not Go project"
     ]
   },
   {
@@ -2930,7 +3503,7 @@
     "type": "cli",
     "binary": "psql",
     "category": "data/database",
-    "description": "PostgreSQL client \u2014 query, manage, import/export databases",
+    "description": "PostgreSQL client — query, manage, import/export databases",
     "capabilities": [
       "sql-query",
       "db-manage",
@@ -2967,6 +3540,16 @@
       "measure",
       "observe",
       "sql-query"
+    ],
+    "use_when": [
+      "PostgreSQL CLI",
+      "run SQL queries",
+      "database administration",
+      "inspect PostgreSQL"
+    ],
+    "do_not_use_when": [
+      "not PostgreSQL",
+      "need GUI"
     ]
   },
   {
@@ -3001,10 +3584,9 @@
       "test"
     ],
     "inputs": [
-      "capture-file",
-      "wordlist",
       "interface",
-      "bssid"
+      "bssid",
+      "wordlist"
     ],
     "outputs": [
       "password"
@@ -3013,23 +3595,31 @@
       "security/wireless"
     ],
     "element_types": [
-      "capture-file",
-      "wordlist",
       "interface",
-      "bssid"
+      "bssid",
+      "wordlist"
     ],
     "tags": [
       "handshake-capture",
       "observe",
       "test",
       "wpa-crack"
+    ],
+    "use_when": [
+      "crack WPA password",
+      "capture WiFi handshake",
+      "WPA dictionary attack"
+    ],
+    "do_not_use_when": [
+      "WPS attack",
+      "no WiFi interface"
     ]
   },
   {
     "name": "WF02-pmkid-clientless",
     "type": "workflow",
     "category": "security/wireless",
-    "description": "Extract PMKID without needing a connected client \u2014 passive WPA attack",
+    "description": "Extract PMKID without needing a connected client — passive WPA attack",
     "capabilities": [
       "pmkid",
       "wpa-crack",
@@ -3054,7 +3644,7 @@
       "observe"
     ],
     "inputs": [
-      "capture-file",
+      "interface",
       "wordlist"
     ],
     "outputs": [
@@ -3064,7 +3654,7 @@
       "security/wireless"
     ],
     "element_types": [
-      "capture-file",
+      "interface",
       "wordlist"
     ],
     "tags": [
@@ -3072,13 +3662,22 @@
       "observe",
       "pmkid",
       "wpa-crack"
+    ],
+    "use_when": [
+      "clientless WPA attack",
+      "PMKID capture",
+      "crack WiFi without client"
+    ],
+    "do_not_use_when": [
+      "need deauth attack",
+      "no WiFi interface"
     ]
   },
   {
     "name": "WF05-arp-mitm",
     "type": "workflow",
     "category": "security/mitm",
-    "description": "ARP spoof MITM \u2014 intercept traffic between target and gateway",
+    "description": "ARP spoof MITM — intercept traffic between target and gateway",
     "capabilities": [
       "mitm",
       "arp-spoof",
@@ -3122,6 +3721,15 @@
       "mitm",
       "observe",
       "test"
+    ],
+    "use_when": [
+      "ARP spoof MITM",
+      "intercept LAN traffic",
+      "sniff credentials on LAN"
+    ],
+    "do_not_use_when": [
+      "WiFi attack",
+      "no LAN access"
     ]
   },
   {
@@ -3172,13 +3780,22 @@
       "observe",
       "test",
       "windows-attack"
+    ],
+    "use_when": [
+      "capture NTLM hash from Windows",
+      "LLMNR poisoning",
+      "Windows credential harvest"
+    ],
+    "do_not_use_when": [
+      "no Windows hosts",
+      "non-Windows network"
     ]
   },
   {
     "name": "WF07-eternalblue",
     "type": "workflow",
     "category": "security/exploitation",
-    "description": "MS17-010 EternalBlue SMB exploit \u2014 remote code execution on unpatched Windows",
+    "description": "MS17-010 EternalBlue SMB exploit — remote code execution on unpatched Windows",
     "capabilities": [
       "exploit",
       "rce",
@@ -3220,13 +3837,22 @@
       "rce",
       "test",
       "windows-attack"
+    ],
+    "use_when": [
+      "exploit MS17-010",
+      "EternalBlue SMB attack",
+      "unpatched Windows RCE"
+    ],
+    "do_not_use_when": [
+      "patched Windows",
+      "non-Windows target"
     ]
   },
   {
     "name": "WF19-full-network-compromise",
     "type": "workflow",
     "category": "security/exploitation",
-    "description": "Full network penetration \u2014 recon to domain admin via chained attacks",
+    "description": "Full network penetration — recon to domain admin via chained attacks",
     "capabilities": [
       "full-pentest",
       "attack-chain",
@@ -3265,6 +3891,15 @@
       "full-pentest",
       "lateral-movement",
       "test"
+    ],
+    "use_when": [
+      "full penetration test",
+      "network compromise chain",
+      "recon to domain admin"
+    ],
+    "do_not_use_when": [
+      "single vulnerability",
+      "web-only scope"
     ]
   },
   {
@@ -3298,8 +3933,8 @@
       "test"
     ],
     "inputs": [
-      "ip",
-      "hostname"
+      "interface",
+      "bssid"
     ],
     "outputs": [
       "report"
@@ -3308,8 +3943,8 @@
       "security/wireless"
     ],
     "element_types": [
-      "ip",
-      "hostname"
+      "interface",
+      "bssid"
     ],
     "tags": [
       "observe",
@@ -3317,6 +3952,15 @@
       "test",
       "wpa-recover",
       "wps-crack"
+    ],
+    "use_when": [
+      "WPS PIN attack",
+      "Pixie Dust WiFi crack",
+      "exploit WPS vulnerability"
+    ],
+    "do_not_use_when": [
+      "WPS disabled",
+      "no WiFi"
     ]
   },
   {
@@ -3350,8 +3994,9 @@
       "observe"
     ],
     "inputs": [
-      "ip",
-      "hostname"
+      "interface",
+      "ssid",
+      "bssid"
     ],
     "outputs": [
       "report"
@@ -3360,8 +4005,9 @@
       "security/wireless"
     ],
     "element_types": [
-      "ip",
-      "hostname"
+      "interface",
+      "ssid",
+      "bssid"
     ],
     "tags": [
       "captive-portal",
@@ -3369,6 +4015,15 @@
       "evil-twin",
       "observe",
       "social-engineering"
+    ],
+    "use_when": [
+      "evil twin attack",
+      "fake AP credential harvest",
+      "WiFi phishing"
+    ],
+    "do_not_use_when": [
+      "no WiFi interface",
+      "passive attack only"
     ]
   },
   {
@@ -3422,6 +4077,15 @@
       "sqli",
       "test",
       "web-scan"
+    ],
+    "use_when": [
+      "SQL injection attack",
+      "web database exfiltration",
+      "exploit web SQLi"
+    ],
+    "do_not_use_when": [
+      "no web application",
+      "network-level attack"
     ]
   },
   {
@@ -3473,6 +4137,15 @@
       "observe",
       "service-attack",
       "test"
+    ],
+    "use_when": [
+      "brute force network service",
+      "SSH brute force",
+      "credential attack on services"
+    ],
+    "do_not_use_when": [
+      "hash cracking",
+      "web application"
     ]
   },
   {
@@ -3504,8 +4177,7 @@
       "observe"
     ],
     "inputs": [
-      "ip",
-      "hostname"
+      "interface"
     ],
     "outputs": [
       "report"
@@ -3514,14 +4186,22 @@
       "security/bluetooth"
     ],
     "element_types": [
-      "ip",
-      "hostname"
+      "interface"
     ],
     "tags": [
       "ble-exploit",
       "ble-scan",
       "gatt-enum",
       "observe"
+    ],
+    "use_when": [
+      "BLE device recon",
+      "enumerate GATT services",
+      "extract BLE characteristics"
+    ],
+    "do_not_use_when": [
+      "no bluetooth adapter",
+      "WiFi attack"
     ]
   },
   {
@@ -3575,6 +4255,15 @@
       "observe",
       "smb-relay",
       "test"
+    ],
+    "use_when": [
+      "SMB relay attack",
+      "NTLM relay to shell",
+      "relay without cracking"
+    ],
+    "do_not_use_when": [
+      "SMB signing enabled",
+      "no Windows targets"
     ]
   },
   {
@@ -3624,6 +4313,15 @@
       "default-creds",
       "test",
       "vendor-fingerprint"
+    ],
+    "use_when": [
+      "default credential check",
+      "factory password spray",
+      "vendor default login"
+    ],
+    "do_not_use_when": [
+      "custom credentials",
+      "no network devices"
     ]
   },
   {
@@ -3657,8 +4355,7 @@
       "test"
     ],
     "inputs": [
-      "ip",
-      "hostname"
+      "interface"
     ],
     "outputs": [
       "report"
@@ -3667,8 +4364,7 @@
       "security/wireless"
     ],
     "element_types": [
-      "ip",
-      "hostname"
+      "interface"
     ],
     "tags": [
       "hidden-ssid",
@@ -3676,6 +4372,15 @@
       "probe-capture",
       "ssid-reveal",
       "test"
+    ],
+    "use_when": [
+      "find hidden WiFi network",
+      "discover hidden SSID",
+      "reveal cloaked AP"
+    ],
+    "do_not_use_when": [
+      "SSID is visible",
+      "no WiFi"
     ]
   },
   {
@@ -3727,6 +4432,15 @@
       "proxy-intercept",
       "test",
       "wpad-poison"
+    ],
+    "use_when": [
+      "WPAD proxy attack",
+      "intercept via WPAD",
+      "Windows proxy poisoning"
+    ],
+    "do_not_use_when": [
+      "no Windows hosts",
+      "WPAD not in use"
     ]
   },
   {
@@ -3781,6 +4495,15 @@
       "phishing",
       "site-clone",
       "test"
+    ],
+    "use_when": [
+      "DNS spoofing attack",
+      "redirect DNS to phishing",
+      "DNS-based credential harvest"
+    ],
+    "do_not_use_when": [
+      "no LAN access",
+      "DNS over HTTPS in use"
     ]
   },
   {
@@ -3833,6 +4556,15 @@
       "monitoring",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "detect ARP spoofing",
+      "ARP poisoning defense",
+      "find MITM on LAN"
+    ],
+    "do_not_use_when": [
+      "attacking not defending",
+      "no LAN"
     ]
   },
   {
@@ -3887,6 +4619,15 @@
       "observe",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "detect brute force attack",
+      "auto-ban failed logins",
+      "defend against credential attack"
+    ],
+    "do_not_use_when": [
+      "offensive operation",
+      "no server to defend"
     ]
   },
   {
@@ -3936,6 +4677,15 @@
       "observe",
       "rogue-ap-detect",
       "transform"
+    ],
+    "use_when": [
+      "detect rogue access point",
+      "find unauthorized WiFi",
+      "wireless IDS"
+    ],
+    "do_not_use_when": [
+      "attacking not defending",
+      "no WiFi monitoring"
     ]
   },
   {
@@ -3987,6 +4737,15 @@
       "default-creds",
       "iot-exploit",
       "observe"
+    ],
+    "use_when": [
+      "exploit IoT device",
+      "firmware analysis",
+      "IoT security test"
+    ],
+    "do_not_use_when": [
+      "no IoT devices",
+      "standard IT network"
     ]
   },
   {
@@ -3994,7 +4753,7 @@
     "type": "cli",
     "binary": "ss",
     "category": "security/defense",
-    "description": "Query kernel socket state \u2014 listening ports, connections, owning processes for baselining",
+    "description": "Query kernel socket state — listening ports, connections, owning processes for baselining",
     "capabilities": [
       "port-baseline",
       "connection-monitor",
@@ -4033,6 +4792,16 @@
       "port-baseline",
       "process-audit",
       "transform"
+    ],
+    "use_when": [
+      "list network sockets",
+      "find listening ports",
+      "check TCP connections",
+      "socket statistics"
+    ],
+    "do_not_use_when": [
+      "need packet inspection",
+      "no network debugging"
     ]
   },
   {
@@ -4040,7 +4809,7 @@
     "type": "cli",
     "binary": "auditd",
     "category": "security/defense",
-    "description": "Kernel audit daemon \u2014 logs file access, process execution, privilege escalation, rootkit detection",
+    "description": "Kernel audit daemon — logs file access, process execution, privilege escalation, rootkit detection",
     "capabilities": [
       "file-audit",
       "exec-log",
@@ -4080,6 +4849,16 @@
       "privilege-monitor",
       "rootkit-detect",
       "transform"
+    ],
+    "use_when": [
+      "Linux audit logging",
+      "monitor file access",
+      "track user actions",
+      "compliance logging"
+    ],
+    "do_not_use_when": [
+      "not Linux",
+      "no audit requirements"
     ]
   },
   {
@@ -4087,7 +4866,7 @@
     "type": "cli",
     "binary": "inotifywait",
     "category": "security/defense",
-    "description": "File system event monitor \u2014 detect config tampering, SSH key injection, malware staging",
+    "description": "File system event monitor — detect config tampering, SSH key injection, malware staging",
     "capabilities": [
       "file-monitor",
       "tamper-detect",
@@ -4124,6 +4903,15 @@
       "realtime-alert",
       "tamper-detect",
       "transform"
+    ],
+    "use_when": [
+      "watch file changes",
+      "monitor directory modifications",
+      "trigger on file events"
+    ],
+    "do_not_use_when": [
+      "not Linux",
+      "one-time file check"
     ]
   },
   {
@@ -4131,7 +4919,7 @@
     "type": "cli",
     "binary": "fail2ban-client",
     "category": "security/defense",
-    "description": "Log-based IPS \u2014 counts auth failures per IP, auto-bans via firewall when threshold exceeded",
+    "description": "Log-based IPS — counts auth failures per IP, auto-bans via firewall when threshold exceeded",
     "capabilities": [
       "brute-detect",
       "auto-ban",
@@ -4198,7 +4986,7 @@
     "type": "cli",
     "binary": "mdk4",
     "category": "security/wireless",
-    "description": "WiFi disruption \u2014 beacon flood, deauth flood, auth DoS, TKIP shutdown, WIDS confusion",
+    "description": "WiFi disruption — beacon flood, deauth flood, auth DoS, TKIP shutdown, WIDS confusion",
     "capabilities": [
       "beacon-flood",
       "deauth-flood",
@@ -4239,6 +5027,16 @@
       "observe",
       "ssid-bruteforce",
       "wids-confusion"
+    ],
+    "use_when": [
+      "WiFi denial of service test",
+      "beacon flood test",
+      "deauth flood test",
+      "WiFi stress test"
+    ],
+    "do_not_use_when": [
+      "legitimate WiFi use",
+      "passive recon"
     ]
   },
   {
@@ -4246,7 +5044,7 @@
     "type": "cli",
     "binary": "setoolkit",
     "category": "security/social-engineering",
-    "description": "Social Engineering Toolkit \u2014 clone login pages, credential harvesting, spear-phishing, fake AP portals",
+    "description": "Social Engineering Toolkit — clone login pages, credential harvesting, spear-phishing, fake AP portals",
     "capabilities": [
       "phishing",
       "site-clone",
@@ -4285,6 +5083,16 @@
       "site-clone",
       "spear-phish",
       "test"
+    ],
+    "use_when": [
+      "social engineering attack",
+      "phishing campaign",
+      "credential harvester",
+      "SE framework"
+    ],
+    "do_not_use_when": [
+      "technical exploit",
+      "network attack"
     ]
   },
   {
@@ -4292,7 +5100,7 @@
     "type": "cli",
     "binary": "uv",
     "category": "development/python",
-    "description": "Python package manager \u2014 100x faster than pip, replaces pip/pipx/pyenv/poetry/virtualenv",
+    "description": "Python package manager — 100x faster than pip, replaces pip/pipx/pyenv/poetry/virtualenv",
     "capabilities": [
       "python-install",
       "venv-manage",
@@ -4330,6 +5138,16 @@
       "python-version",
       "transform",
       "venv-manage"
+    ],
+    "use_when": [
+      "Python package install",
+      "fast pip replacement",
+      "Python virtual env",
+      "Python project management"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "need npm/node"
     ]
   },
   {
@@ -4337,7 +5155,7 @@
     "type": "cli",
     "binary": "just",
     "category": "development/general",
-    "description": "Task runner via justfile \u2014 like make but simpler, for standardizing project commands",
+    "description": "Task runner via justfile — like make but simpler, for standardizing project commands",
     "capabilities": [
       "task-run",
       "build",
@@ -4372,6 +5190,16 @@
       "task-run",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "run project commands",
+      "task runner",
+      "Makefile alternative",
+      "justfile recipes"
+    ],
+    "do_not_use_when": [
+      "need Make compatibility",
+      "C/C++ build system"
     ]
   },
   {
@@ -4411,6 +5239,15 @@
       "git-status",
       "shell-prompt",
       "transform"
+    ],
+    "use_when": [
+      "configure shell prompt",
+      "custom terminal prompt",
+      "cross-shell prompt"
+    ],
+    "do_not_use_when": [
+      "not configuring shell",
+      "no terminal customization"
     ]
   },
   {
@@ -4418,7 +5255,7 @@
     "type": "cli",
     "binary": "cargo-binstall",
     "category": "development/general",
-    "description": "Install Rust binaries from prebuilt GitHub releases \u2014 no compilation needed",
+    "description": "Install Rust binaries from prebuilt GitHub releases — no compilation needed",
     "capabilities": [
       "rust-install",
       "binary-download"
@@ -4448,6 +5285,15 @@
       "binary-download",
       "rust-install",
       "transform"
+    ],
+    "use_when": [
+      "install Rust binaries fast",
+      "skip Rust compilation",
+      "install cargo tools"
+    ],
+    "do_not_use_when": [
+      "not Rust",
+      "need to compile from source"
     ]
   },
   {
@@ -4455,7 +5301,7 @@
     "type": "cli",
     "binary": "mold",
     "category": "development/general",
-    "description": "Drop-in faster linker \u2014 10x faster than ld for Rust/C/C++ link step",
+    "description": "Drop-in faster linker — 10x faster than ld for Rust/C/C++ link step",
     "capabilities": [
       "fast-link",
       "build-speed"
@@ -4485,6 +5331,15 @@
       "build-speed",
       "fast-link",
       "transform"
+    ],
+    "use_when": [
+      "fast linker",
+      "speed up C/C++/Rust builds",
+      "replace ld linker"
+    ],
+    "do_not_use_when": [
+      "not compiling native code",
+      "cross-compiling"
     ]
   },
   {
@@ -4492,7 +5347,7 @@
     "type": "cli",
     "binary": "zellij",
     "category": "development/cli",
-    "description": "Terminal multiplexer with floating panes, WASM plugins, session sharing \u2014 replaces tmux",
+    "description": "Terminal multiplexer with floating panes, WASM plugins, session sharing — replaces tmux",
     "capabilities": [
       "terminal-multiplex",
       "session-manage",
@@ -4525,6 +5380,15 @@
       "session-manage",
       "terminal-multiplex",
       "transform"
+    ],
+    "use_when": [
+      "terminal multiplexer",
+      "split terminal panes",
+      "tmux alternative"
+    ],
+    "do_not_use_when": [
+      "single terminal sufficient",
+      "already using tmux"
     ]
   },
   {
@@ -4532,7 +5396,7 @@
     "type": "cli",
     "binary": "gitui",
     "category": "development/git",
-    "description": "Terminal git UI \u2014 stage hunks, browse commits, manage branches, push/pull",
+    "description": "Terminal git UI — stage hunks, browse commits, manage branches, push/pull",
     "capabilities": [
       "git-ui",
       "stage",
@@ -4568,6 +5432,15 @@
       "observe",
       "stage",
       "transform"
+    ],
+    "use_when": [
+      "TUI git interface",
+      "interactive git staging",
+      "visual git log"
+    ],
+    "do_not_use_when": [
+      "need CLI git",
+      "scripted git operations"
     ]
   },
   {
@@ -4575,7 +5448,7 @@
     "type": "cli",
     "binary": "difft",
     "category": "development/git",
-    "description": "Structural AST-aware diffs \u2014 ignores formatting, shows actual code changes",
+    "description": "Structural AST-aware diffs — ignores formatting, shows actual code changes",
     "capabilities": [
       "ast-diff",
       "code-review"
@@ -4608,6 +5481,15 @@
       "code-review",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "structural diff",
+      "syntax-aware diff",
+      "AST-based code comparison"
+    ],
+    "do_not_use_when": [
+      "need line-based diff",
+      "binary diff"
     ]
   },
   {
@@ -4615,7 +5497,7 @@
     "type": "cli",
     "binary": "btm",
     "category": "development/cli",
-    "description": "System monitor with CPU/RAM/network/disk graphs \u2014 replaces htop",
+    "description": "System monitor with CPU/RAM/network/disk graphs — replaces htop",
     "capabilities": [
       "system-monitor",
       "process-manage",
@@ -4651,6 +5533,15 @@
       "resource-graph",
       "system-monitor",
       "transform"
+    ],
+    "use_when": [
+      "system monitor TUI",
+      "CPU/memory/network graphs",
+      "htop alternative"
+    ],
+    "do_not_use_when": [
+      "need machine-readable output",
+      "scripted monitoring"
     ]
   },
   {
@@ -4658,7 +5549,7 @@
     "type": "cli",
     "binary": "watchexec",
     "category": "development/general",
-    "description": "File watcher \u2014 re-run command on save, works with any language",
+    "description": "File watcher — re-run command on save, works with any language",
     "capabilities": [
       "file-watch",
       "auto-rebuild",
@@ -4693,6 +5584,15 @@
       "file-watch",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "watch files and rerun command",
+      "auto-reload on save",
+      "live development loop"
+    ],
+    "do_not_use_when": [
+      "one-time execution",
+      "no file watching needed"
     ]
   },
   {
@@ -4700,7 +5600,7 @@
     "type": "cli",
     "binary": "xh",
     "category": "development/general",
-    "description": "Fast HTTP client \u2014 httpie-compatible syntax, Rust speed",
+    "description": "Fast HTTP client — httpie-compatible syntax, Rust speed",
     "capabilities": [
       "http-request",
       "api-test",
@@ -4739,6 +5639,15 @@
       "json-post",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "HTTP requests",
+      "API testing CLI",
+      "curl alternative with colors"
+    ],
+    "do_not_use_when": [
+      "need curl compatibility",
+      "scripted HTTP"
     ]
   },
   {
@@ -4746,7 +5655,7 @@
     "type": "cli",
     "binary": "sccache",
     "category": "development/general",
-    "description": "Compiler cache for Rust/C/C++ \u2014 dramatically cuts rebuild times",
+    "description": "Compiler cache for Rust/C/C++ — dramatically cuts rebuild times",
     "capabilities": [
       "compile-cache",
       "build-speed"
@@ -4776,6 +5685,15 @@
       "build-speed",
       "compile-cache",
       "transform"
+    ],
+    "use_when": [
+      "compile cache",
+      "speed up Rust/C++ rebuilds",
+      "shared build cache"
+    ],
+    "do_not_use_when": [
+      "not compiling",
+      "first build only"
     ]
   },
   {
@@ -4783,7 +5701,7 @@
     "type": "cli",
     "binary": "bandwhich",
     "category": "network/monitoring",
-    "description": "Per-process network bandwidth monitor \u2014 shows which process is eating bandwidth",
+    "description": "Per-process network bandwidth monitor — shows which process is eating bandwidth",
     "capabilities": [
       "bandwidth-monitor",
       "process-network"
@@ -4818,6 +5736,15 @@
       "measure",
       "observe",
       "process-network"
+    ],
+    "use_when": [
+      "monitor bandwidth per process",
+      "find which app uses network",
+      "live bandwidth usage"
+    ],
+    "do_not_use_when": [
+      "need historical data",
+      "no network monitoring needed"
     ]
   },
   {
@@ -4825,7 +5752,7 @@
     "type": "cli",
     "binary": "typos",
     "category": "development/general",
-    "description": "Source code spell checker \u2014 low false positives, catches typos in variable names",
+    "description": "Source code spell checker — low false positives, catches typos in variable names",
     "capabilities": [
       "spell-check",
       "typo-detect"
@@ -4856,6 +5783,15 @@
       "spell-check",
       "transform",
       "typo-detect"
+    ],
+    "use_when": [
+      "find typos in code",
+      "spell check source files",
+      "fix identifier typos"
+    ],
+    "do_not_use_when": [
+      "prose spell checking",
+      "not code"
     ]
   },
   {
@@ -4863,7 +5799,7 @@
     "type": "cli",
     "binary": "hexyl",
     "category": "security/forensics",
-    "description": "Colorized hex viewer \u2014 color-codes bytes by type for fast binary analysis",
+    "description": "Colorized hex viewer — color-codes bytes by type for fast binary analysis",
     "capabilities": [
       "hex-view",
       "binary-inspect"
@@ -4899,6 +5835,15 @@
       "binary-inspect",
       "hex-view",
       "observe"
+    ],
+    "use_when": [
+      "hex dump file",
+      "binary file inspection",
+      "colored hex viewer"
+    ],
+    "do_not_use_when": [
+      "text file viewing",
+      "need plain hexdump"
     ]
   },
   {
@@ -4906,7 +5851,7 @@
     "type": "cli",
     "binary": "grex",
     "category": "development/general",
-    "description": "Generate regex from example strings \u2014 produces minimal matching pattern",
+    "description": "Generate regex from example strings — produces minimal matching pattern",
     "capabilities": [
       "regex-generate"
     ],
@@ -4936,6 +5881,15 @@
       "analyze",
       "regex-generate",
       "transform"
+    ],
+    "use_when": [
+      "generate regex from examples",
+      "create regex pattern",
+      "regex builder"
+    ],
+    "do_not_use_when": [
+      "simple pattern",
+      "already know regex"
     ]
   },
   {
@@ -4973,6 +5927,15 @@
       "changelog-generate",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "generate changelog",
+      "changelog from git history",
+      "release notes from commits"
+    ],
+    "do_not_use_when": [
+      "manual changelog",
+      "no git history"
     ]
   },
   {
@@ -4980,7 +5943,7 @@
     "type": "cli",
     "binary": "fnm",
     "category": "development/general",
-    "description": "Fast Node.js version manager \u2014 instant switching, reads .nvmrc, replaces nvm",
+    "description": "Fast Node.js version manager — instant switching, reads .nvmrc, replaces nvm",
     "capabilities": [
       "node-version",
       "version-switch"
@@ -5012,13 +5975,22 @@
       "node-version",
       "transform",
       "version-switch"
+    ],
+    "use_when": [
+      "manage Node.js versions",
+      "switch Node version",
+      "nvm alternative"
+    ],
+    "do_not_use_when": [
+      "not using Node.js",
+      "single Node version"
     ]
   },
   {
     "name": "shodan-mcp",
     "type": "mcp",
     "category": "security/recon",
-    "description": "Shodan API \u2014 IP recon, device search, DNS lookups, CVE/CPE queries from conversation",
+    "description": "Shodan API — IP recon, device search, DNS lookups, CVE/CPE queries from conversation",
     "capabilities": [
       "shodan-search",
       "ip-recon",
@@ -5063,13 +6035,24 @@
       "ip-recon",
       "observe",
       "shodan-search"
+    ],
+    "use_when": [
+      "IP recon via Shodan",
+      "find exposed devices",
+      "CVE lookup",
+      "DNS lookup",
+      "internet device search"
+    ],
+    "do_not_use_when": [
+      "local network scan",
+      "no internet recon needed"
     ]
   },
   {
     "name": "virustotal-mcp",
     "type": "mcp",
     "category": "security/recon",
-    "description": "VirusTotal API \u2014 analyze URLs, hashes, IPs, domains against 70+ scanner engines",
+    "description": "VirusTotal API — analyze URLs, hashes, IPs, domains against 70+ scanner engines",
     "capabilities": [
       "ioc-enrich",
       "hash-check",
@@ -5112,13 +6095,23 @@
       "ioc-enrich",
       "observe",
       "url-scan"
+    ],
+    "use_when": [
+      "scan URL for malware",
+      "check file hash",
+      "analyze suspicious domain",
+      "IOC enrichment"
+    ],
+    "do_not_use_when": [
+      "local file analysis",
+      "network scanning"
     ]
   },
   {
     "name": "pentest-mcp",
     "type": "mcp",
     "category": "security/exploitation",
-    "description": "40+ security tools as MCP \u2014 nmap, nikto, sqlmap, gobuster, nuclei, subfinder, httpx",
+    "description": "40+ security tools as MCP — nmap, nikto, sqlmap, gobuster, nuclei, subfinder, httpx",
     "capabilities": [
       "full-pentest",
       "recon",
@@ -5157,13 +6150,23 @@
       "test",
       "vuln-scan",
       "web-fuzz"
+    ],
+    "use_when": [
+      "full pentest suite",
+      "automated security scan",
+      "vulnerability scan",
+      "web fuzzing"
+    ],
+    "do_not_use_when": [
+      "single tool needed",
+      "passive recon only"
     ]
   },
   {
     "name": "semgrep-mcp",
     "type": "mcp",
     "category": "security/scanning",
-    "description": "Semgrep static analysis \u2014 scan code for vulns with 5000+ rules mid-generation",
+    "description": "Semgrep static analysis — scan code for vulns with 5000+ rules mid-generation",
     "capabilities": [
       "sast",
       "vuln-scan",
@@ -5231,7 +6234,7 @@
     "name": "postgres-mcp",
     "type": "mcp",
     "category": "data/database",
-    "description": "PostgreSQL MCP \u2014 query, schema inspect, explain plans, index recommendations, health analysis",
+    "description": "PostgreSQL MCP — query, schema inspect, explain plans, index recommendations, health analysis",
     "capabilities": [
       "sql-query",
       "schema-inspect",
@@ -5274,13 +6277,23 @@
       "query-explain",
       "schema-inspect",
       "sql-query"
+    ],
+    "use_when": [
+      "query PostgreSQL",
+      "inspect database schema",
+      "explain query plan",
+      "database health check"
+    ],
+    "do_not_use_when": [
+      "not PostgreSQL",
+      "file-based data"
     ]
   },
   {
     "name": "dbhub",
     "type": "mcp",
     "category": "data/database",
-    "description": "Multi-database MCP \u2014 Postgres, MySQL, SQLite, SQL Server via two token-efficient tools",
+    "description": "Multi-database MCP — Postgres, MySQL, SQLite, SQL Server via two token-efficient tools",
     "capabilities": [
       "sql-query",
       "schema-inspect",
@@ -5313,13 +6326,22 @@
       "observe",
       "schema-inspect",
       "sql-query"
+    ],
+    "use_when": [
+      "query multiple databases",
+      "multi-DB schema inspect",
+      "MySQL or SQLite or Postgres"
+    ],
+    "do_not_use_when": [
+      "single database type",
+      "no database needed"
     ]
   },
   {
     "name": "sqlite-mcp",
     "type": "mcp",
     "category": "data/database",
-    "description": "SQLite access \u2014 query, schema inspect, memo system for lightweight local databases",
+    "description": "SQLite access — query, schema inspect, memo system for lightweight local databases",
     "capabilities": [
       "sqlite-query",
       "schema-inspect"
@@ -5350,13 +6372,22 @@
       "observe",
       "schema-inspect",
       "sqlite-query"
+    ],
+    "use_when": [
+      "query SQLite database",
+      "inspect SQLite schema",
+      "local database operations"
+    ],
+    "do_not_use_when": [
+      "not SQLite",
+      "need PostgreSQL/MySQL"
     ]
   },
   {
     "name": "docker-mcp",
     "type": "mcp",
     "category": "infra/containers",
-    "description": "Docker management \u2014 create containers, deploy Compose, view logs, manage volumes",
+    "description": "Docker management — create containers, deploy Compose, view logs, manage volumes",
     "capabilities": [
       "container-manage",
       "compose-deploy",
@@ -5412,7 +6443,7 @@
     "name": "filesystem-mcp",
     "type": "mcp",
     "category": "development/general",
-    "description": "Full filesystem access \u2014 read, write, edit, search, tree within declared root directories",
+    "description": "Full filesystem access — read, write, edit, search, tree within declared root directories",
     "capabilities": [
       "file-read",
       "file-write",
@@ -5444,13 +6475,22 @@
       "file-search",
       "file-write",
       "transform"
+    ],
+    "use_when": [
+      "file operations via MCP",
+      "read write search files",
+      "directory tree"
+    ],
+    "do_not_use_when": [
+      "Claude Code native tools available",
+      "simple file read"
     ]
   },
   {
     "name": "fetch-mcp",
     "type": "mcp",
     "category": "development/general",
-    "description": "Web fetcher \u2014 converts HTML to clean markdown for LLM consumption, respects robots.txt",
+    "description": "Web fetcher — converts HTML to clean markdown for LLM consumption, respects robots.txt",
     "capabilities": [
       "web-fetch",
       "html-to-markdown"
@@ -5478,13 +6518,22 @@
       "html-to-markdown",
       "transform",
       "web-fetch"
+    ],
+    "use_when": [
+      "fetch web page as markdown",
+      "convert HTML for LLM",
+      "read web documentation"
+    ],
+    "do_not_use_when": [
+      "local file reading",
+      "API call"
     ]
   },
   {
     "name": "git-mcp",
     "type": "mcp",
     "category": "development/git",
-    "description": "Git operations \u2014 log, diff, status, blame, branch, commit on local repositories",
+    "description": "Git operations — log, diff, status, blame, branch, commit on local repositories",
     "capabilities": [
       "git-log",
       "git-diff",
@@ -5518,13 +6567,22 @@
       "git-log",
       "observe",
       "transform"
+    ],
+    "use_when": [
+      "git operations via MCP",
+      "git log diff blame",
+      "repository inspection"
+    ],
+    "do_not_use_when": [
+      "git CLI available",
+      "simple git command"
     ]
   },
   {
     "name": "sequential-thinking",
     "type": "mcp",
     "category": "agent/reasoning",
-    "description": "Structured step-by-step reasoning scratchpad \u2014 revise earlier steps before committing",
+    "description": "Structured step-by-step reasoning scratchpad — revise earlier steps before committing",
     "capabilities": [
       "structured-reasoning",
       "multi-step-planning",
@@ -5554,13 +6612,22 @@
       "plan",
       "structured-reasoning",
       "thought-revision"
+    ],
+    "use_when": [
+      "complex reasoning",
+      "step-by-step analysis",
+      "multi-step problem solving"
+    ],
+    "do_not_use_when": [
+      "simple task",
+      "direct answer available"
     ]
   },
   {
     "name": "memory-mcp",
     "type": "mcp",
     "category": "agent/memory",
-    "description": "Persistent knowledge graph \u2014 entities, relations, observations across sessions",
+    "description": "Persistent knowledge graph — entities, relations, observations across sessions",
     "capabilities": [
       "knowledge-graph",
       "entity-store",
@@ -5594,13 +6661,22 @@
       "observe",
       "relation-track",
       "transform"
+    ],
+    "use_when": [
+      "persist information across sessions",
+      "knowledge graph",
+      "entity relationships"
+    ],
+    "do_not_use_when": [
+      "temporary data",
+      "session-only context"
     ]
   },
   {
     "name": "qdrant-mcp",
     "type": "mcp",
     "category": "agent/memory",
-    "description": "Vector database MCP \u2014 semantic memory over Qdrant, store/retrieve embeddings with natural language",
+    "description": "Vector database MCP — semantic memory over Qdrant, store/retrieve embeddings with natural language",
     "capabilities": [
       "vector-search",
       "rag",
@@ -5636,13 +6712,22 @@
       "semantic-memory",
       "transform",
       "vector-search"
+    ],
+    "use_when": [
+      "vector search",
+      "semantic similarity",
+      "embedding-based retrieval"
+    ],
+    "do_not_use_when": [
+      "keyword search",
+      "no embeddings"
     ]
   },
   {
     "name": "mcp-language-server",
     "type": "mcp",
     "category": "development/general",
-    "description": "LSP wrapper \u2014 exposes get_definition, get_references, rename_symbol, diagnostics for any language",
+    "description": "LSP wrapper — exposes get_definition, get_references, rename_symbol, diagnostics for any language",
     "capabilities": [
       "lsp",
       "code-navigate",
@@ -5674,13 +6759,23 @@
       "find-references",
       "lsp",
       "transform"
+    ],
+    "use_when": [
+      "language server features",
+      "code completion",
+      "diagnostics",
+      "hover info"
+    ],
+    "do_not_use_when": [
+      "simple text editing",
+      "no IDE features needed"
     ]
   },
   {
     "name": "antv-chart-mcp",
     "type": "mcp",
     "category": "development/frontend",
-    "description": "Chart generator \u2014 26+ chart types (bar, line, network graph, Sankey, heatmap) as rendered images or HTML",
+    "description": "Chart generator — 26+ chart types (bar, line, network graph, Sankey, heatmap) as rendered images or HTML",
     "capabilities": [
       "chart-generate",
       "data-viz",
@@ -5714,13 +6809,22 @@
       "heatmap",
       "network-graph",
       "transform"
+    ],
+    "use_when": [
+      "create charts",
+      "data visualization",
+      "generate graphs"
+    ],
+    "do_not_use_when": [
+      "no visualization needed",
+      "raw data only"
     ]
   },
   {
     "name": "mcp-run-python",
     "type": "mcp",
     "category": "development/general",
-    "description": "Safe Python execution in Pyodide sandbox \u2014 test code without touching host filesystem",
+    "description": "Safe Python execution in Pyodide sandbox — test code without touching host filesystem",
     "capabilities": [
       "python-execute",
       "sandbox",
@@ -5752,6 +6856,15 @@
       "sandbox",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "run Python code",
+      "execute Python snippets",
+      "Python REPL"
+    ],
+    "do_not_use_when": [
+      "Bash available",
+      "not Python"
     ]
   },
   {
@@ -5759,7 +6872,7 @@
     "type": "cli",
     "binary": "socat",
     "category": "network/relay",
-    "description": "Bidirectional data relay between two objects \u2014 sockets, files, pipes, serial ports, or any file descriptor",
+    "description": "Bidirectional data relay between two objects — sockets, files, pipes, serial ports, or any file descriptor",
     "capabilities": [
       "port-forward",
       "socket-relay",
@@ -5806,6 +6919,16 @@
       "socket-relay",
       "transform",
       "tunnel"
+    ],
+    "use_when": [
+      "relay network connections",
+      "port forwarding",
+      "bidirectional data transfer",
+      "socket debugging"
+    ],
+    "do_not_use_when": [
+      "simple HTTP request",
+      "no network relay needed"
     ]
   },
   {
@@ -5813,7 +6936,7 @@
     "type": "cli",
     "binary": "nc",
     "category": "network/connectivity",
-    "description": "Netcat \u2014 raw TCP/UDP connection testing, port scanning, data transfer between endpoints",
+    "description": "Netcat — raw TCP/UDP connection testing, port scanning, data transfer between endpoints",
     "capabilities": [
       "port-test",
       "connect",
@@ -5863,6 +6986,16 @@
       "observe",
       "port-test",
       "test"
+    ],
+    "use_when": [
+      "netcat connection",
+      "port check",
+      "simple TCP/UDP client",
+      "reverse shell listener"
+    ],
+    "do_not_use_when": [
+      "need encryption",
+      "HTTP protocol"
     ]
   },
   {
@@ -5870,7 +7003,7 @@
     "type": "cli",
     "binary": "mtr",
     "category": "network/monitoring",
-    "description": "Continuous trace + measure of the network path between two hosts \u2014 combines traceroute and ping",
+    "description": "Continuous trace + measure of the network path between two hosts — combines traceroute and ping",
     "capabilities": [
       "traceroute",
       "latency-measure",
@@ -5917,6 +7050,15 @@
       "packet-loss",
       "path-analysis",
       "traceroute"
+    ],
+    "use_when": [
+      "traceroute with ping",
+      "network path analysis",
+      "find packet loss location"
+    ],
+    "do_not_use_when": [
+      "simple ping",
+      "no routing issue"
     ]
   },
   {
@@ -5924,7 +7066,7 @@
     "type": "cli",
     "binary": "dig",
     "category": "network/dns",
-    "description": "DNS query tool \u2014 resolve, inspect, and test DNS records for any domain object",
+    "description": "DNS query tool — resolve, inspect, and test DNS records for any domain object",
     "capabilities": [
       "dns-lookup",
       "dns-trace",
@@ -5998,7 +7140,7 @@
     "type": "cli",
     "binary": "whois",
     "category": "network/dns",
-    "description": "Query domain/IP registration data \u2014 ownership, registrar, dates, nameservers",
+    "description": "Query domain/IP registration data — ownership, registrar, dates, nameservers",
     "capabilities": [
       "domain-info",
       "ip-info",
@@ -6041,6 +7183,15 @@
       "observe",
       "ownership",
       "registrar-lookup"
+    ],
+    "use_when": [
+      "domain registration lookup",
+      "IP ownership",
+      "registrar information"
+    ],
+    "do_not_use_when": [
+      "DNS resolution",
+      "no domain info needed"
     ]
   },
   {
@@ -6048,7 +7199,7 @@
     "type": "cli",
     "binary": "host",
     "category": "network/dns",
-    "description": "Simple DNS lookup \u2014 resolve hostnames to IPs and reverse",
+    "description": "Simple DNS lookup — resolve hostnames to IPs and reverse",
     "capabilities": [
       "dns-lookup",
       "reverse-dns"
@@ -6089,6 +7240,16 @@
       "dns-lookup",
       "observe",
       "reverse-dns"
+    ],
+    "use_when": [
+      "DNS lookup",
+      "resolve hostname",
+      "find DNS records",
+      "reverse DNS"
+    ],
+    "do_not_use_when": [
+      "need detailed dig output",
+      "no DNS needed"
     ]
   },
   {
@@ -6151,6 +7312,16 @@
       "observe",
       "test",
       "tls-test"
+    ],
+    "use_when": [
+      "SSL certificate inspection",
+      "generate certificates",
+      "test TLS connection",
+      "encrypt/decrypt data"
+    ],
+    "do_not_use_when": [
+      "no crypto needed",
+      "application-level security"
     ]
   },
   {
@@ -6158,7 +7329,7 @@
     "type": "cli",
     "binary": "lsof",
     "category": "system/inspection",
-    "description": "Map which processes own which objects \u2014 open files, sockets, ports, pipes",
+    "description": "Map which processes own which objects — open files, sockets, ports, pipes",
     "capabilities": [
       "port-owner",
       "file-owner",
@@ -6202,6 +7373,16 @@
       "port-owner",
       "process-inspect",
       "socket-list"
+    ],
+    "use_when": [
+      "list open files",
+      "find process using port",
+      "find file locks",
+      "debug file descriptors"
+    ],
+    "do_not_use_when": [
+      "process listing only",
+      "no file investigation"
     ]
   },
   {
@@ -6209,7 +7390,7 @@
     "type": "cli",
     "binary": "htop",
     "category": "system/monitoring",
-    "description": "Interactive process monitor \u2014 observe CPU, memory, and process state in real-time",
+    "description": "Interactive process monitor — observe CPU, memory, and process state in real-time",
     "capabilities": [
       "process-monitor",
       "cpu-usage",
@@ -6249,6 +7430,16 @@
       "observe",
       "process-monitor",
       "process-tree"
+    ],
+    "use_when": [
+      "interactive process monitor",
+      "CPU/memory usage",
+      "kill processes",
+      "system resource overview"
+    ],
+    "do_not_use_when": [
+      "need machine-readable output",
+      "scripted monitoring"
     ]
   },
   {
@@ -6256,7 +7447,7 @@
     "type": "cli",
     "binary": "traceroute",
     "category": "network/monitoring",
-    "description": "Trace the network path from this host to a target \u2014 shows each hop and latency",
+    "description": "Trace the network path from this host to a target — shows each hop and latency",
     "capabilities": [
       "path-trace",
       "hop-analysis",
@@ -6302,6 +7493,15 @@
       "measure",
       "observe",
       "path-trace"
+    ],
+    "use_when": [
+      "trace network path",
+      "find routing hops",
+      "diagnose network routing"
+    ],
+    "do_not_use_when": [
+      "simple connectivity check",
+      "ping sufficient"
     ]
   },
   {
@@ -6309,7 +7509,7 @@
     "type": "cli",
     "binary": "black",
     "category": "development/python",
-    "description": "Opinionated Python code formatter \u2014 enforces consistent style across all Python objects",
+    "description": "Opinionated Python code formatter — enforces consistent style across all Python objects",
     "capabilities": [
       "format",
       "style-check",
@@ -6350,6 +7550,15 @@
       "format",
       "style-check",
       "transform"
+    ],
+    "use_when": [
+      "format Python code",
+      "Python auto-formatter",
+      "enforce Python style"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "using ruff format"
     ]
   },
   {
@@ -6357,7 +7566,7 @@
     "type": "cli",
     "binary": "mypy",
     "category": "development/python",
-    "description": "Static type checker for Python \u2014 validate type annotations and catch type errors before runtime",
+    "description": "Static type checker for Python — validate type annotations and catch type errors before runtime",
     "capabilities": [
       "type-check",
       "static-analysis",
@@ -6398,6 +7607,15 @@
       "transform",
       "type-check",
       "type-validate"
+    ],
+    "use_when": [
+      "Python type checking",
+      "verify type annotations",
+      "find type errors"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "no type annotations"
     ]
   },
   {
@@ -6445,6 +7663,15 @@
       "measure",
       "observe",
       "sql-query"
+    ],
+    "use_when": [
+      "PostgreSQL CLI with autocomplete",
+      "interactive SQL",
+      "better psql"
+    ],
+    "do_not_use_when": [
+      "not PostgreSQL",
+      "scripted SQL"
     ]
   },
   {
@@ -6452,7 +7679,7 @@
     "type": "cli",
     "binary": "jq",
     "category": "development/cli",
-    "description": "JSON processor \u2014 filter, transform, and query JSON objects from the command line",
+    "description": "JSON processor — filter, transform, and query JSON objects from the command line",
     "capabilities": [
       "json-filter",
       "json-transform",
@@ -6517,7 +7744,7 @@
     "type": "cli",
     "binary": "rsync",
     "category": "system/transfer",
-    "description": "Efficient file synchronization \u2014 transfer and sync file objects between local and remote systems",
+    "description": "Efficient file synchronization — transfer and sync file objects between local and remote systems",
     "capabilities": [
       "file-sync",
       "remote-copy",
@@ -6575,7 +7802,7 @@
     "type": "cli",
     "binary": "tmux",
     "category": "system/multiplexer",
-    "description": "Terminal multiplexer \u2014 run parallel sessions and persistent processes that survive disconnects",
+    "description": "Terminal multiplexer — run parallel sessions and persistent processes that survive disconnects",
     "capabilities": [
       "session-manage",
       "parallel-sessions",
@@ -6613,6 +7840,16 @@
       "persistent-process",
       "session-manage",
       "transform"
+    ],
+    "use_when": [
+      "terminal multiplexer",
+      "persistent terminal session",
+      "split panes",
+      "remote session management"
+    ],
+    "do_not_use_when": [
+      "single command",
+      "no terminal management needed"
     ]
   },
   {
@@ -6620,7 +7857,7 @@
     "type": "cli",
     "binary": "pytest",
     "category": "development/testing",
-    "description": "Python test runner \u2014 discovers and executes test functions, reports pass/fail with detailed output",
+    "description": "Python test runner — discovers and executes test functions, reports pass/fail with detailed output",
     "capabilities": [
       "unit-test",
       "integration-test",
@@ -6691,7 +7928,7 @@
     "type": "cli",
     "binary": "adb",
     "category": "development/android",
-    "description": "Android Debug Bridge \u2014 observe device logs and crash traces, debug application code, install apps, transfer files, execute shell commands on Android devices and emulators",
+    "description": "Android Debug Bridge — observe device logs and crash traces, debug application code, install apps, transfer files, execute shell commands on Android devices and emulators",
     "capabilities": [
       "device-connect",
       "logcat",
@@ -6780,7 +8017,7 @@
     "type": "cli",
     "binary": "gradle",
     "category": "development/android",
-    "description": "Build system for Android/JVM projects \u2014 compile, test, assemble APKs, manage dependencies",
+    "description": "Build system for Android/JVM projects — compile, test, assemble APKs, manage dependencies",
     "capabilities": [
       "build",
       "test-run",
@@ -6826,6 +8063,15 @@
       "test",
       "test-run",
       "transform"
+    ],
+    "use_when": [
+      "Java/Kotlin build",
+      "Android build",
+      "run Gradle tasks"
+    ],
+    "do_not_use_when": [
+      "not JVM project",
+      "using Maven"
     ]
   },
   {
@@ -6833,7 +8079,7 @@
     "type": "cli",
     "binary": "pip3",
     "category": "development/python",
-    "description": "Python package manager \u2014 install, list, and inspect Python packages and their dependencies",
+    "description": "Python package manager — install, list, and inspect Python packages and their dependencies",
     "capabilities": [
       "package-install",
       "package-list",
@@ -6895,7 +8141,7 @@
     "type": "cli",
     "binary": "npm",
     "category": "development/general",
-    "description": "Node.js package manager \u2014 install, manage, and audit JavaScript/TypeScript project dependencies",
+    "description": "Node.js package manager — install, manage, and audit JavaScript/TypeScript project dependencies",
     "capabilities": [
       "package-install",
       "package-list",
@@ -6937,6 +8183,15 @@
       "package-list",
       "test",
       "transform"
+    ],
+    "use_when": [
+      "install Node packages",
+      "run npm scripts",
+      "Node.js project management"
+    ],
+    "do_not_use_when": [
+      "not JavaScript/TypeScript",
+      "using yarn/pnpm"
     ]
   },
   {
@@ -6944,7 +8199,7 @@
     "type": "mcp",
     "binary": "playwright",
     "category": "testing/browser",
-    "description": "Browser automation and testing framework \u2014 headless Chromium/Firefox/WebKit for e2e tests and JS-rendered scraping",
+    "description": "Browser automation and testing framework — headless Chromium/Firefox/WebKit for e2e tests and JS-rendered scraping",
     "capabilities": [
       "browser-automation",
       "e2e-testing",
@@ -7022,7 +8277,7 @@
     "type": "cli",
     "binary": "tailwindcss",
     "category": "development/frontend",
-    "description": "Utility-first CSS framework \u2014 compile utility classes, purge unused CSS, responsive and dark-mode variants",
+    "description": "Utility-first CSS framework — compile utility classes, purge unused CSS, responsive and dark-mode variants",
     "capabilities": [
       "css-utility",
       "responsive-design",
@@ -7097,7 +8352,7 @@
     "type": "cli",
     "binary": "vite",
     "category": "development/frontend",
-    "description": "Frontend build tool \u2014 fast dev server with HMR, ESM-native bundling, plugin ecosystem for React/Vue/Svelte",
+    "description": "Frontend build tool — fast dev server with HMR, ESM-native bundling, plugin ecosystem for React/Vue/Svelte",
     "capabilities": [
       "dev-server",
       "hot-reload",
@@ -7178,7 +8433,7 @@
     "type": "cli",
     "binary": "next",
     "category": "development/frontend",
-    "description": "React framework \u2014 SSR, SSG, App Router, API routes, image optimisation, and edge runtime",
+    "description": "React framework — SSR, SSG, App Router, API routes, image optimisation, and edge runtime",
     "capabilities": [
       "ssr",
       "ssg",
@@ -7261,7 +8516,7 @@
     "type": "cli",
     "binary": "npx",
     "category": "development/frontend",
-    "description": "UI component library \u2014 declarative component model, hooks, context, virtual DOM reconciliation",
+    "description": "UI component library — declarative component model, hooks, context, virtual DOM reconciliation",
     "capabilities": [
       "component-model",
       "hooks",
@@ -7343,7 +8598,7 @@
     "type": "cli",
     "binary": "vue",
     "category": "development/frontend",
-    "description": "Progressive UI framework \u2014 single-file components, composition API, reactivity system, Pinia state",
+    "description": "Progressive UI framework — single-file components, composition API, reactivity system, Pinia state",
     "capabilities": [
       "single-file-components",
       "composition-api",
@@ -7417,7 +8672,7 @@
     "type": "cli",
     "binary": "eslint",
     "category": "development/frontend",
-    "description": "JavaScript and TypeScript linter \u2014 static analysis, rule-based error detection, auto-fix",
+    "description": "JavaScript and TypeScript linter — static analysis, rule-based error detection, auto-fix",
     "capabilities": [
       "lint-js",
       "lint-ts",
@@ -7494,7 +8749,7 @@
     "type": "cli",
     "binary": "prettier",
     "category": "development/frontend",
-    "description": "Opinionated code formatter \u2014 consistent formatting for JS/TS/CSS/HTML/JSON/Markdown",
+    "description": "Opinionated code formatter — consistent formatting for JS/TS/CSS/HTML/JSON/Markdown",
     "capabilities": [
       "format-js",
       "format-ts",
@@ -7567,7 +8822,7 @@
     "type": "mcp",
     "binary": "",
     "category": "development/frontend",
-    "description": "Figma design platform MCP \u2014 read designs, inspect components, extract design tokens, generate diagrams",
+    "description": "Figma design platform MCP — read designs, inspect components, extract design tokens, generate diagrams",
     "capabilities": [
       "read-design",
       "inspect-component",
@@ -7647,7 +8902,7 @@
     "type": "cli",
     "binary": "storybook",
     "category": "development/frontend",
-    "description": "Component development environment \u2014 isolated component building, visual testing, design system documentation",
+    "description": "Component development environment — isolated component building, visual testing, design system documentation",
     "capabilities": [
       "component-isolation",
       "visual-testing",
@@ -7723,7 +8978,7 @@
     "type": "cli",
     "binary": "lighthouse",
     "category": "development/frontend",
-    "description": "Web performance and quality auditing \u2014 measures performance, accessibility, SEO, and best practices scores",
+    "description": "Web performance and quality auditing — measures performance, accessibility, SEO, and best practices scores",
     "capabilities": [
       "performance-audit",
       "accessibility-audit",
@@ -7802,7 +9057,7 @@
     "type": "cli",
     "binary": "cypress",
     "category": "testing/browser",
-    "description": "End-to-end browser testing framework \u2014 real browser execution, time-travel debugging, network stubbing",
+    "description": "End-to-end browser testing framework — real browser execution, time-travel debugging, network stubbing",
     "capabilities": [
       "e2e-testing",
       "component-testing",
@@ -7879,7 +9134,7 @@
     "type": "cli",
     "binary": "npx",
     "category": "data/scraping",
-    "description": "Web scraping and crawling framework \u2014 manages request queues, browser pools, anti-bot handling",
+    "description": "Web scraping and crawling framework — manages request queues, browser pools, anti-bot handling",
     "capabilities": [
       "web-crawl",
       "request-queue",
@@ -7967,7 +9222,7 @@
     "type": "cli",
     "binary": "npx",
     "category": "data/scraping",
-    "description": "jQuery-like HTML parser for Node.js \u2014 fast server-side DOM traversal and data extraction from static HTML",
+    "description": "jQuery-like HTML parser for Node.js — fast server-side DOM traversal and data extraction from static HTML",
     "capabilities": [
       "html-parse",
       "dom-traverse",
@@ -8048,7 +9303,7 @@
     "type": "cli",
     "binary": "npx",
     "category": "data/scraping",
-    "description": "Headless Chrome automation \u2014 screenshots, PDFs, form interaction, JS execution on dynamic pages",
+    "description": "Headless Chrome automation — screenshots, PDFs, form interaction, JS execution on dynamic pages",
     "capabilities": [
       "headless-chrome",
       "screenshot",
@@ -8125,7 +9380,7 @@
     "type": "cli",
     "binary": "python3",
     "category": "data/analysis",
-    "description": "Python data analysis library \u2014 DataFrames, CSV/Parquet/JSON ingestion, groupby, merge, time-series",
+    "description": "Python data analysis library — DataFrames, CSV/Parquet/JSON ingestion, groupby, merge, time-series",
     "capabilities": [
       "dataframe",
       "csv-read",
@@ -8221,7 +9476,7 @@
     "type": "mcp",
     "binary": "duckdb",
     "category": "data/database",
-    "description": "Analytical SQL engine \u2014 query CSV/Parquet/JSON directly, fast aggregations, window functions, no server needed",
+    "description": "Analytical SQL engine — query CSV/Parquet/JSON directly, fast aggregations, window functions, no server needed",
     "capabilities": [
       "sql-query",
       "csv-query",
@@ -8311,7 +9566,7 @@
     "type": "cli",
     "binary": "sqlite3",
     "category": "data/database",
-    "description": "Embedded relational database \u2014 zero-config local SQL, file-based storage, ideal for prototypes",
+    "description": "Embedded relational database — zero-config local SQL, file-based storage, ideal for prototypes",
     "capabilities": [
       "embedded-sql",
       "file-database",
@@ -8389,7 +9644,7 @@
     "type": "cli",
     "binary": "prisma",
     "category": "data/database",
-    "description": "ORM and database toolkit \u2014 type-safe query client, schema migration, seed, introspection for Postgres/MySQL/SQLite",
+    "description": "ORM and database toolkit — type-safe query client, schema migration, seed, introspection for Postgres/MySQL/SQLite",
     "capabilities": [
       "type-safe-orm",
       "schema-migration",
@@ -8473,7 +9728,7 @@
     "type": "cli",
     "binary": "jq",
     "category": "data/pipeline",
-    "description": "Command-line JSON processor \u2014 filter, map, reduce, reshape JSON from files or stdin",
+    "description": "Command-line JSON processor — filter, map, reduce, reshape JSON from files or stdin",
     "capabilities": [
       "json-filter",
       "json-transform",
@@ -8547,7 +9802,7 @@
     "type": "cli",
     "binary": "uvicorn",
     "category": "development/backend",
-    "description": "Python async web framework \u2014 OpenAPI-first REST/WebSocket APIs, type validation via Pydantic, auto docs",
+    "description": "Python async web framework — OpenAPI-first REST/WebSocket APIs, type validation via Pydantic, auto docs",
     "capabilities": [
       "rest-api",
       "websocket",
@@ -8633,7 +9888,7 @@
     "type": "cli",
     "binary": "node",
     "category": "development/backend",
-    "description": "Minimal Node.js web framework \u2014 HTTP routing, middleware pipeline, REST and WebSocket APIs",
+    "description": "Minimal Node.js web framework — HTTP routing, middleware pipeline, REST and WebSocket APIs",
     "capabilities": [
       "http-routing",
       "middleware",
@@ -8714,7 +9969,7 @@
     "type": "cli",
     "binary": "flask",
     "category": "development/backend",
-    "description": "Lightweight Python WSGI web framework \u2014 simple routing, Jinja2 templates, extension ecosystem",
+    "description": "Lightweight Python WSGI web framework — simple routing, Jinja2 templates, extension ecosystem",
     "capabilities": [
       "http-routing",
       "jinja2-templates",
@@ -8790,7 +10045,7 @@
     "type": "cli",
     "binary": "uvicorn",
     "category": "development/backend",
-    "description": "Lightning-fast ASGI server \u2014 production runner for FastAPI/Starlette, supports HTTP/2 and WebSocket",
+    "description": "Lightning-fast ASGI server — production runner for FastAPI/Starlette, supports HTTP/2 and WebSocket",
     "capabilities": [
       "asgi-server",
       "http2",
@@ -8863,7 +10118,7 @@
     "type": "cli",
     "binary": "http",
     "category": "development/backend",
-    "description": "Human-friendly HTTP client \u2014 colourised output, JSON default, session persistence, form uploads",
+    "description": "Human-friendly HTTP client — colourised output, JSON default, session persistence, form uploads",
     "capabilities": [
       "http-request",
       "json-default",
@@ -8942,7 +10197,7 @@
     "type": "cli",
     "binary": "postman",
     "category": "development/backend",
-    "description": "API platform \u2014 collection-based testing, environment variables, mock servers, API documentation",
+    "description": "API platform — collection-based testing, environment variables, mock servers, API documentation",
     "capabilities": [
       "api-collection",
       "mock-server",
@@ -9018,7 +10273,7 @@
     "type": "cli",
     "binary": "nginx",
     "category": "infra/web",
-    "description": "High-performance web server and reverse proxy \u2014 load balancing, TLS termination, static file serving",
+    "description": "High-performance web server and reverse proxy — load balancing, TLS termination, static file serving",
     "capabilities": [
       "reverse-proxy",
       "load-balance",
@@ -9100,7 +10355,7 @@
     "type": "cli",
     "binary": "caddy",
     "category": "infra/web",
-    "description": "Web server with automatic HTTPS \u2014 Caddyfile config, Let's Encrypt integration, reverse proxy",
+    "description": "Web server with automatic HTTPS — Caddyfile config, Let's Encrypt integration, reverse proxy",
     "capabilities": [
       "auto-https",
       "lets-encrypt",
@@ -9174,7 +10429,7 @@
     "type": "cli",
     "binary": "celery",
     "category": "infra/scheduling",
-    "description": "Distributed task queue \u2014 async workers, beat scheduler for periodic tasks, result backend",
+    "description": "Distributed task queue — async workers, beat scheduler for periodic tasks, result backend",
     "capabilities": [
       "task-queue",
       "async-workers",
@@ -9262,7 +10517,7 @@
     "type": "cli",
     "binary": "crontab",
     "category": "infra/scheduling",
-    "description": "Unix job scheduler \u2014 crontab entries to run commands or scripts on a fixed time schedule",
+    "description": "Unix job scheduler — crontab entries to run commands or scripts on a fixed time schedule",
     "capabilities": [
       "schedule-job",
       "periodic-run",
@@ -9342,7 +10597,7 @@
     "type": "cli",
     "binary": "redis-cli",
     "category": "data/cache",
-    "description": "In-memory data store \u2014 caching, pub/sub messaging, session storage, rate limiting, sorted sets",
+    "description": "In-memory data store — caching, pub/sub messaging, session storage, rate limiting, sorted sets",
     "capabilities": [
       "cache",
       "pub-sub",
@@ -9432,7 +10687,7 @@
     "type": "cli",
     "binary": "rabbitmqctl",
     "category": "infra/messaging",
-    "description": "Message broker \u2014 AMQP-based queues, exchanges, routing, topic pub/sub, durable message delivery",
+    "description": "Message broker — AMQP-based queues, exchanges, routing, topic pub/sub, durable message delivery",
     "capabilities": [
       "amqp",
       "durable-queue",
@@ -9514,7 +10769,7 @@
     "type": "cli",
     "binary": "node",
     "category": "infra/notification",
-    "description": "Node.js email sending library \u2014 SMTP transport, OAuth2, attachments, HTML templates",
+    "description": "Node.js email sending library — SMTP transport, OAuth2, attachments, HTML templates",
     "capabilities": [
       "smtp-send",
       "oauth2",
@@ -9593,7 +10848,7 @@
     "type": "cli",
     "binary": "ntfy",
     "category": "infra/notification",
-    "description": "Push notification service \u2014 send alerts to phone or desktop via HTTP, integrates with cron and scripts",
+    "description": "Push notification service — send alerts to phone or desktop via HTTP, integrates with cron and scripts",
     "capabilities": [
       "push-notification",
       "http-trigger",
@@ -9666,6 +10921,2366 @@
       "system",
       "topic-subscribe",
       "transform"
+    ]
+  },
+  {
+    "name": "jest",
+    "type": "cli",
+    "binary": "jest",
+    "category": "development/testing",
+    "description": "JavaScript test framework — snapshots, mocks, coverage, watch mode",
+    "capabilities": [
+      "unit-test",
+      "snapshot-test",
+      "mocking",
+      "coverage",
+      "watch"
+    ],
+    "common_commands": {
+      "run": "npx jest",
+      "watch": "npx jest --watch",
+      "coverage": "npx jest --coverage",
+      "single": "npx jest tests/foo.test.js"
+    },
+    "use_when": [
+      "run JavaScript tests",
+      "Jest snapshot tests",
+      "test React components",
+      "JS unit tests"
+    ],
+    "do_not_use_when": [
+      "not JavaScript",
+      "Python tests"
+    ],
+    "categories": [
+      "development/testing",
+      "development/frontend"
+    ],
+    "actions": [
+      "test",
+      "verify"
+    ],
+    "tags": [
+      "test",
+      "javascript",
+      "react",
+      "snapshot",
+      "coverage"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "vitest",
+    "type": "cli",
+    "binary": "vitest",
+    "category": "development/testing",
+    "description": "Vite-native test framework — fast, ESM-first, Jest-compatible API",
+    "capabilities": [
+      "unit-test",
+      "component-test",
+      "coverage",
+      "watch",
+      "esm"
+    ],
+    "common_commands": {
+      "run": "npx vitest run",
+      "watch": "npx vitest",
+      "coverage": "npx vitest run --coverage"
+    },
+    "use_when": [
+      "Vite project tests",
+      "fast JavaScript tests",
+      "ESM test framework",
+      "TypeScript tests"
+    ],
+    "do_not_use_when": [
+      "not using Vite",
+      "legacy CommonJS project"
+    ],
+    "categories": [
+      "development/testing",
+      "development/frontend"
+    ],
+    "actions": [
+      "test",
+      "verify"
+    ],
+    "tags": [
+      "test",
+      "vite",
+      "typescript",
+      "esm",
+      "fast"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "playwright-cli",
+    "type": "cli",
+    "binary": "playwright",
+    "category": "testing/browser",
+    "description": "End-to-end browser testing — Chromium, Firefox, WebKit, codegen, trace viewer",
+    "capabilities": [
+      "e2e-test",
+      "browser-test",
+      "codegen",
+      "trace",
+      "screenshot"
+    ],
+    "common_commands": {
+      "test": "npx playwright test",
+      "codegen": "npx playwright codegen localhost:3000",
+      "show_report": "npx playwright show-report"
+    },
+    "use_when": [
+      "end-to-end browser tests",
+      "test web application",
+      "generate test from browser",
+      "cross-browser testing"
+    ],
+    "do_not_use_when": [
+      "unit tests",
+      "API-only testing",
+      "no browser needed"
+    ],
+    "categories": [
+      "testing/browser",
+      "development/testing"
+    ],
+    "actions": [
+      "test",
+      "verify",
+      "observe"
+    ],
+    "tags": [
+      "e2e",
+      "browser",
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "gunicorn",
+    "type": "cli",
+    "binary": "gunicorn",
+    "category": "development/backend",
+    "description": "WSGI server for Python — runs Flask, Django sync apps in production",
+    "capabilities": [
+      "serve-app",
+      "wsgi",
+      "process-manager"
+    ],
+    "common_commands": {
+      "flask": "gunicorn -w 4 app:app",
+      "django": "gunicorn -w 4 project.wsgi:application"
+    },
+    "use_when": [
+      "run Flask in production",
+      "Python WSGI server",
+      "Django production server"
+    ],
+    "do_not_use_when": [
+      "FastAPI/async",
+      "development only",
+      "not Python"
+    ],
+    "categories": [
+      "development/backend",
+      "development/python"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "server",
+      "flask",
+      "django",
+      "wsgi",
+      "production"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "jupyter",
+    "type": "cli",
+    "binary": "jupyter",
+    "category": "data/ml",
+    "description": "Interactive notebook server — Python, data analysis, visualization, ML experiments",
+    "capabilities": [
+      "notebook",
+      "interactive",
+      "visualization",
+      "data-analysis"
+    ],
+    "common_commands": {
+      "lab": "jupyter lab",
+      "notebook": "jupyter notebook",
+      "convert": "jupyter nbconvert --to html notebook.ipynb"
+    },
+    "use_when": [
+      "interactive data analysis",
+      "run Jupyter notebook",
+      "ML experiments",
+      "data visualization"
+    ],
+    "do_not_use_when": [
+      "production code",
+      "no interactive analysis needed"
+    ],
+    "categories": [
+      "data/ml",
+      "data/analysis"
+    ],
+    "actions": [
+      "analyze",
+      "observe"
+    ],
+    "tags": [
+      "notebook",
+      "data",
+      "ml",
+      "python",
+      "visualization"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "dvc",
+    "type": "cli",
+    "binary": "dvc",
+    "category": "data/ml",
+    "description": "Data Version Control — track datasets, ML models, pipelines with Git",
+    "capabilities": [
+      "data-versioning",
+      "pipeline",
+      "model-tracking",
+      "remote-storage"
+    ],
+    "common_commands": {
+      "add": "dvc add data/dataset.csv",
+      "push": "dvc push",
+      "pull": "dvc pull",
+      "repro": "dvc repro"
+    },
+    "use_when": [
+      "version control datasets",
+      "track ML models",
+      "ML pipeline management",
+      "data versioning"
+    ],
+    "do_not_use_when": [
+      "no ML data",
+      "small files in git"
+    ],
+    "categories": [
+      "data/ml",
+      "development/git"
+    ],
+    "actions": [
+      "transform",
+      "observe"
+    ],
+    "tags": [
+      "data",
+      "versioning",
+      "ml",
+      "pipeline",
+      "models"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "mlflow",
+    "type": "cli",
+    "binary": "mlflow",
+    "category": "data/ml",
+    "description": "ML experiment tracking — log metrics, parameters, artifacts, model registry",
+    "capabilities": [
+      "experiment-tracking",
+      "model-registry",
+      "serving",
+      "projects"
+    ],
+    "common_commands": {
+      "ui": "mlflow ui",
+      "run": "mlflow run .",
+      "serve": "mlflow models serve -m models:/model/Production"
+    },
+    "use_when": [
+      "track ML experiments",
+      "compare model metrics",
+      "ML model registry",
+      "serve ML model"
+    ],
+    "do_not_use_when": [
+      "no ML",
+      "simple scripts"
+    ],
+    "categories": [
+      "data/ml"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "ml",
+      "tracking",
+      "experiments",
+      "models",
+      "metrics"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "huggingface-cli",
+    "type": "cli",
+    "binary": "huggingface-cli",
+    "category": "data/ml",
+    "description": "HuggingFace Hub CLI — download models, upload datasets, manage repos",
+    "capabilities": [
+      "model-download",
+      "dataset-upload",
+      "repo-manage",
+      "login"
+    ],
+    "common_commands": {
+      "download": "huggingface-cli download meta-llama/Llama-3-8B",
+      "upload": "huggingface-cli upload my-model ./model",
+      "login": "huggingface-cli login"
+    },
+    "use_when": [
+      "download HuggingFace model",
+      "upload to HuggingFace",
+      "manage HF repos"
+    ],
+    "do_not_use_when": [
+      "no ML models",
+      "not using HuggingFace"
+    ],
+    "categories": [
+      "data/ml"
+    ],
+    "actions": [
+      "transform",
+      "observe"
+    ],
+    "tags": [
+      "huggingface",
+      "models",
+      "datasets",
+      "download"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "csvkit",
+    "type": "cli",
+    "binary": "csvkit",
+    "category": "data/analysis",
+    "description": "CSV processing suite — convert, query, stats, join CSV files from CLI",
+    "capabilities": [
+      "csv-convert",
+      "csv-query",
+      "csv-stats",
+      "csv-join"
+    ],
+    "common_commands": {
+      "in2csv": "in2csv data.xlsx > data.csv",
+      "csvstat": "csvstat data.csv",
+      "csvsql": "csvsql --query 'SELECT * FROM data WHERE age > 30' data.csv"
+    },
+    "use_when": [
+      "process CSV files",
+      "query CSV with SQL",
+      "convert Excel to CSV",
+      "CSV statistics"
+    ],
+    "do_not_use_when": [
+      "JSON data",
+      "binary data",
+      "database queries"
+    ],
+    "categories": [
+      "data/analysis"
+    ],
+    "actions": [
+      "analyze",
+      "transform"
+    ],
+    "tags": [
+      "csv",
+      "data",
+      "analysis",
+      "convert",
+      "sql"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "xsv",
+    "type": "cli",
+    "binary": "xsv",
+    "category": "data/analysis",
+    "description": "Fast CSV toolkit in Rust — search, slice, sort, join, stats on large CSVs",
+    "capabilities": [
+      "csv-search",
+      "csv-sort",
+      "csv-stats",
+      "csv-join",
+      "csv-slice"
+    ],
+    "common_commands": {
+      "stats": "xsv stats data.csv",
+      "search": "xsv search 'pattern' data.csv",
+      "frequency": "xsv frequency -s column data.csv"
+    },
+    "use_when": [
+      "fast CSV processing",
+      "large CSV analysis",
+      "CSV search and filter"
+    ],
+    "do_not_use_when": [
+      "small data",
+      "not CSV format"
+    ],
+    "categories": [
+      "data/analysis"
+    ],
+    "actions": [
+      "analyze",
+      "observe"
+    ],
+    "tags": [
+      "csv",
+      "fast",
+      "rust",
+      "data",
+      "analysis"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "visidata",
+    "type": "cli",
+    "binary": "vd",
+    "category": "data/analysis",
+    "description": "Terminal spreadsheet — explore CSV, JSON, SQLite, pandas interactively in TUI",
+    "capabilities": [
+      "data-explore",
+      "pivot",
+      "aggregate",
+      "multi-format"
+    ],
+    "common_commands": {
+      "open": "vd data.csv",
+      "json": "vd data.json",
+      "sqlite": "vd database.db"
+    },
+    "use_when": [
+      "explore data interactively",
+      "TUI spreadsheet",
+      "quick data inspection",
+      "pivot table in terminal"
+    ],
+    "do_not_use_when": [
+      "need GUI",
+      "scripted processing"
+    ],
+    "categories": [
+      "data/analysis"
+    ],
+    "actions": [
+      "observe",
+      "analyze"
+    ],
+    "tags": [
+      "tui",
+      "spreadsheet",
+      "csv",
+      "json",
+      "explore"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "dbt",
+    "type": "cli",
+    "binary": "dbt",
+    "category": "data/pipeline",
+    "description": "Data build tool — SQL transformations, testing, documentation for data warehouses",
+    "capabilities": [
+      "sql-transform",
+      "data-test",
+      "data-docs",
+      "lineage"
+    ],
+    "common_commands": {
+      "run": "dbt run",
+      "test": "dbt test",
+      "docs": "dbt docs generate && dbt docs serve"
+    },
+    "use_when": [
+      "SQL data transformations",
+      "data warehouse modeling",
+      "dbt project",
+      "data testing"
+    ],
+    "do_not_use_when": [
+      "no data warehouse",
+      "application code",
+      "not SQL"
+    ],
+    "categories": [
+      "data/pipeline"
+    ],
+    "actions": [
+      "transform",
+      "test"
+    ],
+    "tags": [
+      "sql",
+      "warehouse",
+      "transform",
+      "analytics",
+      "lineage"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "airbyte",
+    "type": "cli",
+    "binary": "airbyte",
+    "category": "data/pipeline",
+    "description": "ELT data integration — 300+ connectors for extracting and loading data",
+    "capabilities": [
+      "data-extract",
+      "data-load",
+      "connectors",
+      "sync"
+    ],
+    "common_commands": {
+      "list": "airbyte source list",
+      "sync": "airbyte connection sync"
+    },
+    "use_when": [
+      "ETL pipeline",
+      "data integration",
+      "sync data sources",
+      "extract and load data"
+    ],
+    "do_not_use_when": [
+      "simple file copy",
+      "no data integration needed"
+    ],
+    "categories": [
+      "data/pipeline"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "etl",
+      "integration",
+      "connectors",
+      "sync",
+      "data"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "aws",
+    "type": "cli",
+    "binary": "aws",
+    "category": "infra/cloud",
+    "description": "AWS CLI — manage all AWS services from the command line",
+    "capabilities": [
+      "s3",
+      "ec2",
+      "lambda",
+      "iam",
+      "cloudformation",
+      "ecs"
+    ],
+    "common_commands": {
+      "s3_ls": "aws s3 ls",
+      "s3_sync": "aws s3 sync ./build s3://bucket/",
+      "ec2_list": "aws ec2 describe-instances",
+      "lambda_invoke": "aws lambda invoke --function-name my-func output.json"
+    },
+    "use_when": [
+      "manage AWS resources",
+      "S3 operations",
+      "deploy to AWS",
+      "AWS Lambda",
+      "EC2 management"
+    ],
+    "do_not_use_when": [
+      "not using AWS",
+      "local development only"
+    ],
+    "categories": [
+      "infra/cloud"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "aws",
+      "cloud",
+      "s3",
+      "ec2",
+      "lambda",
+      "iam"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "gcloud",
+    "type": "cli",
+    "binary": "gcloud",
+    "category": "infra/cloud",
+    "description": "Google Cloud CLI — manage GCP projects, compute, storage, Kubernetes",
+    "capabilities": [
+      "compute",
+      "storage",
+      "gke",
+      "cloud-run",
+      "iam"
+    ],
+    "common_commands": {
+      "projects": "gcloud projects list",
+      "deploy": "gcloud run deploy --source .",
+      "compute": "gcloud compute instances list"
+    },
+    "use_when": [
+      "manage Google Cloud",
+      "deploy to GCP",
+      "Cloud Run deployment",
+      "GKE cluster management"
+    ],
+    "do_not_use_when": [
+      "not using GCP",
+      "local development only"
+    ],
+    "categories": [
+      "infra/cloud"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "gcp",
+      "cloud",
+      "compute",
+      "kubernetes",
+      "cloud-run"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "flyctl",
+    "type": "cli",
+    "binary": "fly",
+    "category": "infra/cloud",
+    "description": "Fly.io CLI — deploy apps globally, Postgres, volumes, machines",
+    "capabilities": [
+      "deploy",
+      "scale",
+      "postgres",
+      "volumes"
+    ],
+    "common_commands": {
+      "launch": "fly launch",
+      "deploy": "fly deploy",
+      "status": "fly status",
+      "postgres": "fly postgres create"
+    },
+    "use_when": [
+      "deploy to Fly.io",
+      "global app deployment",
+      "Fly Postgres",
+      "edge deployment"
+    ],
+    "do_not_use_when": [
+      "not using Fly.io",
+      "local only"
+    ],
+    "categories": [
+      "infra/cloud"
+    ],
+    "actions": [
+      "transform",
+      "observe"
+    ],
+    "tags": [
+      "fly",
+      "deploy",
+      "edge",
+      "postgres",
+      "global"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "vercel",
+    "type": "cli",
+    "binary": "vercel",
+    "category": "infra/cloud",
+    "description": "Vercel CLI — deploy frontend/fullstack apps, preview deployments, edge functions",
+    "capabilities": [
+      "deploy",
+      "preview",
+      "edge-functions",
+      "domains"
+    ],
+    "common_commands": {
+      "deploy": "vercel",
+      "prod": "vercel --prod",
+      "env": "vercel env pull"
+    },
+    "use_when": [
+      "deploy to Vercel",
+      "Next.js deployment",
+      "preview deployment",
+      "frontend hosting"
+    ],
+    "do_not_use_when": [
+      "not using Vercel",
+      "backend-only service"
+    ],
+    "categories": [
+      "infra/cloud",
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "vercel",
+      "deploy",
+      "nextjs",
+      "frontend",
+      "edge"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "pulumi",
+    "type": "cli",
+    "binary": "pulumi",
+    "category": "infra/cloud",
+    "description": "Infrastructure as Code in real programming languages — Python, TypeScript, Go",
+    "capabilities": [
+      "iac",
+      "deploy",
+      "preview",
+      "stack-management"
+    ],
+    "common_commands": {
+      "up": "pulumi up",
+      "preview": "pulumi preview",
+      "stack": "pulumi stack ls"
+    },
+    "use_when": [
+      "infrastructure as code",
+      "Pulumi project",
+      "IaC in Python/TypeScript",
+      "cloud provisioning"
+    ],
+    "do_not_use_when": [
+      "using Terraform",
+      "no cloud infrastructure"
+    ],
+    "categories": [
+      "infra/cloud"
+    ],
+    "actions": [
+      "transform",
+      "plan"
+    ],
+    "tags": [
+      "iac",
+      "cloud",
+      "python",
+      "typescript",
+      "provisioning"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "podman",
+    "type": "cli",
+    "binary": "podman",
+    "category": "infra/containers",
+    "description": "Rootless container runtime — Docker-compatible, daemonless, OCI-compliant",
+    "capabilities": [
+      "container-run",
+      "build",
+      "pod-manage",
+      "rootless"
+    ],
+    "common_commands": {
+      "run": "podman run -it ubuntu bash",
+      "build": "podman build -t myapp .",
+      "ps": "podman ps -a"
+    },
+    "use_when": [
+      "run containers rootless",
+      "Docker alternative",
+      "build container images",
+      "no Docker daemon"
+    ],
+    "do_not_use_when": [
+      "need Docker Compose",
+      "Docker swarm"
+    ],
+    "categories": [
+      "infra/containers"
+    ],
+    "actions": [
+      "transform",
+      "observe"
+    ],
+    "tags": [
+      "container",
+      "rootless",
+      "oci",
+      "docker-compatible"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "docker-compose",
+    "type": "cli",
+    "binary": "docker-compose",
+    "category": "infra/containers",
+    "description": "Multi-container orchestration — define and run multi-service apps",
+    "capabilities": [
+      "compose-up",
+      "compose-build",
+      "service-manage",
+      "network"
+    ],
+    "common_commands": {
+      "up": "docker compose up -d",
+      "down": "docker compose down",
+      "logs": "docker compose logs -f",
+      "build": "docker compose build"
+    },
+    "use_when": [
+      "multi-container app",
+      "docker compose stack",
+      "local dev environment",
+      "run services together"
+    ],
+    "do_not_use_when": [
+      "single container",
+      "Kubernetes deployment"
+    ],
+    "categories": [
+      "infra/containers"
+    ],
+    "actions": [
+      "transform",
+      "observe"
+    ],
+    "tags": [
+      "compose",
+      "multi-container",
+      "services",
+      "orchestration"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "lazydocker",
+    "type": "cli",
+    "binary": "lazydocker",
+    "category": "infra/containers",
+    "description": "TUI for Docker — manage containers, images, volumes, logs interactively",
+    "capabilities": [
+      "container-manage",
+      "log-view",
+      "image-manage",
+      "tui"
+    ],
+    "common_commands": {
+      "start": "lazydocker"
+    },
+    "use_when": [
+      "interactive Docker management",
+      "Docker TUI",
+      "view container logs",
+      "manage Docker visually"
+    ],
+    "do_not_use_when": [
+      "scripted Docker ops",
+      "no Docker"
+    ],
+    "categories": [
+      "infra/containers"
+    ],
+    "actions": [
+      "observe"
+    ],
+    "tags": [
+      "docker",
+      "tui",
+      "containers",
+      "interactive"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "gh",
+    "type": "cli",
+    "binary": "gh",
+    "category": "development/git",
+    "description": "GitHub CLI — create PRs, manage issues, run workflows, browse repos",
+    "capabilities": [
+      "pr-create",
+      "issue-manage",
+      "workflow-run",
+      "repo-browse",
+      "codespace"
+    ],
+    "common_commands": {
+      "pr_create": "gh pr create --fill",
+      "pr_list": "gh pr list",
+      "issue_create": "gh issue create",
+      "run_list": "gh run list",
+      "browse": "gh browse"
+    },
+    "use_when": [
+      "create GitHub PR",
+      "manage GitHub issues",
+      "trigger GitHub Actions",
+      "GitHub CLI operations"
+    ],
+    "do_not_use_when": [
+      "not using GitHub",
+      "GitLab/Bitbucket"
+    ],
+    "categories": [
+      "development/git"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "github",
+      "pr",
+      "issues",
+      "actions",
+      "cli"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "pre-commit",
+    "type": "cli",
+    "binary": "pre-commit",
+    "category": "development/git",
+    "description": "Git hook manager — run linters, formatters, checks before every commit",
+    "capabilities": [
+      "git-hooks",
+      "lint",
+      "format",
+      "auto-fix"
+    ],
+    "common_commands": {
+      "install": "pre-commit install",
+      "run_all": "pre-commit run --all-files",
+      "autoupdate": "pre-commit autoupdate"
+    },
+    "use_when": [
+      "setup git hooks",
+      "pre-commit checks",
+      "auto-format on commit",
+      "enforce code quality"
+    ],
+    "do_not_use_when": [
+      "no git repo",
+      "manual checks preferred"
+    ],
+    "categories": [
+      "development/git",
+      "development/general"
+    ],
+    "actions": [
+      "verify",
+      "transform"
+    ],
+    "tags": [
+      "git",
+      "hooks",
+      "lint",
+      "format",
+      "quality"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "direnv",
+    "type": "cli",
+    "binary": "direnv",
+    "category": "development/general",
+    "description": "Per-directory environment variables — auto-load .envrc on cd",
+    "capabilities": [
+      "env-manage",
+      "auto-load",
+      "project-isolation"
+    ],
+    "common_commands": {
+      "allow": "direnv allow",
+      "edit": "direnv edit ."
+    },
+    "use_when": [
+      "per-project env vars",
+      "auto-load environment",
+      "manage .envrc",
+      "project isolation"
+    ],
+    "do_not_use_when": [
+      "global env sufficient",
+      "no env vars needed"
+    ],
+    "categories": [
+      "development/general"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "env",
+      "environment",
+      "dotenv",
+      "project",
+      "isolation"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "act",
+    "type": "cli",
+    "binary": "act",
+    "category": "development/general",
+    "description": "Run GitHub Actions locally — test CI workflows without pushing",
+    "capabilities": [
+      "local-ci",
+      "github-actions",
+      "workflow-test"
+    ],
+    "common_commands": {
+      "run": "act",
+      "list": "act -l",
+      "job": "act -j build"
+    },
+    "use_when": [
+      "test GitHub Actions locally",
+      "debug CI workflow",
+      "run CI without pushing"
+    ],
+    "do_not_use_when": [
+      "not using GitHub Actions",
+      "GitLab CI"
+    ],
+    "categories": [
+      "development/general",
+      "development/git"
+    ],
+    "actions": [
+      "test"
+    ],
+    "tags": [
+      "github-actions",
+      "ci",
+      "local",
+      "workflow",
+      "test"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "systemctl",
+    "type": "cli",
+    "binary": "systemctl",
+    "category": "system/monitoring",
+    "description": "Systemd service manager — start, stop, enable, status system services",
+    "capabilities": [
+      "service-manage",
+      "enable",
+      "status",
+      "logs"
+    ],
+    "common_commands": {
+      "status": "systemctl status nginx",
+      "restart": "sudo systemctl restart nginx",
+      "enable": "sudo systemctl enable nginx",
+      "list": "systemctl list-units --type=service"
+    },
+    "use_when": [
+      "manage system services",
+      "check service status",
+      "restart service",
+      "enable service on boot"
+    ],
+    "do_not_use_when": [
+      "not Linux",
+      "no systemd",
+      "container-only"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "systemd",
+      "service",
+      "linux",
+      "daemon"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "journalctl",
+    "type": "cli",
+    "binary": "journalctl",
+    "category": "system/monitoring",
+    "description": "Systemd journal reader — query structured system and service logs",
+    "capabilities": [
+      "log-read",
+      "log-filter",
+      "log-follow"
+    ],
+    "common_commands": {
+      "follow": "journalctl -f",
+      "service": "journalctl -u nginx --since today",
+      "errors": "journalctl -p err --since '1 hour ago'"
+    },
+    "use_when": [
+      "read system logs",
+      "follow service logs",
+      "filter logs by service",
+      "debug service errors"
+    ],
+    "do_not_use_when": [
+      "not Linux",
+      "application logs only"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe"
+    ],
+    "tags": [
+      "logs",
+      "systemd",
+      "journal",
+      "debugging"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "redis-cli",
+    "type": "cli",
+    "binary": "redis-cli",
+    "category": "data/cache",
+    "description": "Redis CLI — key-value operations, pub/sub, cluster management",
+    "capabilities": [
+      "key-value",
+      "pub-sub",
+      "cluster",
+      "monitor"
+    ],
+    "common_commands": {
+      "connect": "redis-cli",
+      "get": "redis-cli GET key",
+      "monitor": "redis-cli MONITOR",
+      "info": "redis-cli INFO"
+    },
+    "use_when": [
+      "Redis operations",
+      "check Redis keys",
+      "Redis monitoring",
+      "pub/sub debugging"
+    ],
+    "do_not_use_when": [
+      "no Redis server",
+      "not using cache"
+    ],
+    "categories": [
+      "data/cache",
+      "data/database"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "redis",
+      "cache",
+      "key-value",
+      "pub-sub"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "mongosh",
+    "type": "cli",
+    "binary": "mongosh",
+    "category": "data/database",
+    "description": "MongoDB shell — query, aggregate, manage MongoDB databases",
+    "capabilities": [
+      "query",
+      "aggregate",
+      "index-manage",
+      "admin"
+    ],
+    "common_commands": {
+      "connect": "mongosh mongodb://localhost:27017",
+      "find": "db.collection.find({})",
+      "aggregate": "db.collection.aggregate([...])"
+    },
+    "use_when": [
+      "query MongoDB",
+      "MongoDB administration",
+      "MongoDB aggregation",
+      "manage MongoDB indexes"
+    ],
+    "do_not_use_when": [
+      "not MongoDB",
+      "SQL database"
+    ],
+    "categories": [
+      "data/database"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "mongodb",
+      "nosql",
+      "query",
+      "aggregate"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "chromatic",
+    "type": "cli",
+    "binary": "chromatic",
+    "category": "development/frontend",
+    "description": "Visual regression testing — catch UI changes, review in Storybook cloud",
+    "capabilities": [
+      "visual-regression",
+      "screenshot-diff",
+      "ui-review"
+    ],
+    "common_commands": {
+      "publish": "npx chromatic --project-token=TOKEN"
+    },
+    "use_when": [
+      "visual regression testing",
+      "catch UI changes",
+      "review UI diffs",
+      "Storybook publishing"
+    ],
+    "do_not_use_when": [
+      "no Storybook",
+      "no UI"
+    ],
+    "categories": [
+      "development/frontend",
+      "development/testing"
+    ],
+    "actions": [
+      "test",
+      "verify"
+    ],
+    "tags": [
+      "visual",
+      "regression",
+      "screenshot",
+      "storybook",
+      "review"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "svgo",
+    "type": "cli",
+    "binary": "svgo",
+    "category": "development/frontend",
+    "description": "SVG optimizer — minify, clean up, and optimize SVG files for web",
+    "capabilities": [
+      "svg-optimize",
+      "svg-minify",
+      "svg-clean"
+    ],
+    "common_commands": {
+      "optimize": "svgo icon.svg",
+      "folder": "svgo -f ./icons"
+    },
+    "use_when": [
+      "optimize SVG files",
+      "minify SVG icons",
+      "clean SVG for web"
+    ],
+    "do_not_use_when": [
+      "not SVG",
+      "raster images"
+    ],
+    "categories": [
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "svg",
+      "optimize",
+      "icons",
+      "web",
+      "minify"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "sharp-cli",
+    "type": "cli",
+    "binary": "sharp",
+    "category": "development/frontend",
+    "description": "Image processing CLI — resize, convert, compress images for web (WebP, AVIF)",
+    "capabilities": [
+      "image-resize",
+      "image-convert",
+      "image-compress",
+      "webp",
+      "avif"
+    ],
+    "common_commands": {
+      "resize": "sharp -i input.jpg -o output.webp resize 800",
+      "convert": "sharp -i photo.png -o photo.avif"
+    },
+    "use_when": [
+      "optimize images for web",
+      "convert to WebP/AVIF",
+      "resize images",
+      "compress images"
+    ],
+    "do_not_use_when": [
+      "not images",
+      "SVG files"
+    ],
+    "categories": [
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "image",
+      "webp",
+      "avif",
+      "resize",
+      "optimize"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "postcss",
+    "type": "cli",
+    "binary": "postcss",
+    "category": "development/frontend",
+    "description": "CSS transformer — autoprefixer, nesting, custom properties, minification",
+    "capabilities": [
+      "css-transform",
+      "autoprefixer",
+      "css-minify",
+      "css-nesting"
+    ],
+    "common_commands": {
+      "build": "postcss src/styles.css -o dist/styles.css",
+      "watch": "postcss src/styles.css -o dist/styles.css --watch"
+    },
+    "use_when": [
+      "transform CSS",
+      "add vendor prefixes",
+      "CSS post-processing",
+      "minify CSS"
+    ],
+    "do_not_use_when": [
+      "using Tailwind only",
+      "no CSS"
+    ],
+    "categories": [
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "css",
+      "autoprefixer",
+      "postcss",
+      "minify",
+      "transform"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "shadcn-ui",
+    "type": "cli",
+    "binary": "shadcn-ui",
+    "category": "development/frontend",
+    "description": "UI component CLI — add accessible, customizable React components to your project",
+    "capabilities": [
+      "component-add",
+      "theme-config",
+      "tailwind-components"
+    ],
+    "common_commands": {
+      "init": "npx shadcn-ui init",
+      "add": "npx shadcn-ui add button dialog table"
+    },
+    "use_when": [
+      "add UI components",
+      "shadcn component library",
+      "accessible React components",
+      "Tailwind UI kit"
+    ],
+    "do_not_use_when": [
+      "not React",
+      "not using Tailwind"
+    ],
+    "categories": [
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "ui",
+      "components",
+      "react",
+      "tailwind",
+      "accessible"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "webpack",
+    "type": "cli",
+    "binary": "webpack",
+    "category": "development/frontend",
+    "description": "Module bundler — bundle JS/CSS/assets, code splitting, tree shaking",
+    "capabilities": [
+      "bundle",
+      "code-split",
+      "tree-shake",
+      "hot-reload"
+    ],
+    "common_commands": {
+      "build": "npx webpack --mode production",
+      "dev": "npx webpack serve --mode development"
+    },
+    "use_when": [
+      "bundle JavaScript",
+      "webpack project",
+      "legacy frontend build",
+      "code splitting"
+    ],
+    "do_not_use_when": [
+      "using Vite",
+      "simple project",
+      "no bundling needed"
+    ],
+    "categories": [
+      "development/frontend"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "bundle",
+      "javascript",
+      "webpack",
+      "build",
+      "frontend"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "aider",
+    "type": "cli",
+    "binary": "aider",
+    "category": "agent/reasoning",
+    "description": "AI pair programmer — edit code with LLMs from CLI, multi-file support",
+    "capabilities": [
+      "code-edit",
+      "pair-program",
+      "multi-file",
+      "git-aware"
+    ],
+    "common_commands": {
+      "start": "aider --model claude-3.5-sonnet",
+      "files": "aider file1.py file2.py"
+    },
+    "use_when": [
+      "AI pair programming",
+      "LLM code editing",
+      "aider session"
+    ],
+    "do_not_use_when": [
+      "manual editing",
+      "no LLM needed"
+    ],
+    "categories": [
+      "agent/reasoning",
+      "development/general"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "ai",
+      "pair-program",
+      "llm",
+      "code-edit"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "open-interpreter",
+    "type": "cli",
+    "binary": "interpreter",
+    "category": "agent/reasoning",
+    "description": "Natural language to code execution — run Python, shell, JS from conversation",
+    "capabilities": [
+      "code-execute",
+      "natural-language",
+      "multi-language"
+    ],
+    "use_when": [
+      "execute code from natural language",
+      "conversational coding",
+      "quick automation"
+    ],
+    "do_not_use_when": [
+      "production code",
+      "need version control"
+    ],
+    "categories": [
+      "agent/reasoning"
+    ],
+    "actions": [
+      "transform",
+      "analyze"
+    ],
+    "tags": [
+      "ai",
+      "interpreter",
+      "natural-language"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "fabric",
+    "type": "cli",
+    "binary": "fabric",
+    "category": "agent/reasoning",
+    "description": "AI prompt patterns — curated prompts for summarize, extract, analyze, create",
+    "capabilities": [
+      "prompt-patterns",
+      "summarize",
+      "extract",
+      "analyze"
+    ],
+    "use_when": [
+      "AI prompt patterns",
+      "summarize content",
+      "extract key info",
+      "structured AI output"
+    ],
+    "do_not_use_when": [
+      "custom prompts",
+      "no AI processing"
+    ],
+    "categories": [
+      "agent/reasoning"
+    ],
+    "actions": [
+      "analyze",
+      "transform"
+    ],
+    "tags": [
+      "ai",
+      "prompts",
+      "patterns",
+      "summarize"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "llm",
+    "type": "cli",
+    "binary": "llm",
+    "category": "agent/reasoning",
+    "description": "Simon Willison's LLM CLI — query any model, manage templates, log conversations",
+    "capabilities": [
+      "llm-query",
+      "template-manage",
+      "conversation-log",
+      "multi-model"
+    ],
+    "common_commands": {
+      "query": "llm \"explain this code\"",
+      "models": "llm models"
+    },
+    "use_when": [
+      "query LLM from CLI",
+      "manage LLM templates",
+      "log AI conversations"
+    ],
+    "do_not_use_when": [
+      "GUI preferred",
+      "no CLI LLM needed"
+    ],
+    "categories": [
+      "agent/reasoning",
+      "data/ml"
+    ],
+    "actions": [
+      "analyze",
+      "transform"
+    ],
+    "tags": [
+      "llm",
+      "cli",
+      "templates",
+      "multi-model"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "k6",
+    "type": "cli",
+    "binary": "k6",
+    "category": "development/testing",
+    "description": "Load testing tool — write tests in JavaScript, measure API performance",
+    "capabilities": [
+      "load-test",
+      "stress-test",
+      "performance-test",
+      "api-test"
+    ],
+    "common_commands": {
+      "run": "k6 run test.js",
+      "cloud": "k6 cloud test.js"
+    },
+    "use_when": [
+      "load test API",
+      "stress test service",
+      "performance benchmarking",
+      "API load testing"
+    ],
+    "do_not_use_when": [
+      "unit tests",
+      "no performance testing needed"
+    ],
+    "categories": [
+      "development/testing"
+    ],
+    "actions": [
+      "test",
+      "measure"
+    ],
+    "tags": [
+      "load",
+      "stress",
+      "performance",
+      "api",
+      "benchmark"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "locust",
+    "type": "cli",
+    "binary": "locust",
+    "category": "development/testing",
+    "description": "Python load testing — distributed, write scenarios in Python, web UI",
+    "capabilities": [
+      "load-test",
+      "distributed-test",
+      "web-ui",
+      "python-scenarios"
+    ],
+    "common_commands": {
+      "run": "locust -f locustfile.py",
+      "headless": "locust -f locustfile.py --headless -u 100"
+    },
+    "use_when": [
+      "Python load tests",
+      "distributed load testing",
+      "web UI load test"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "simple unit tests"
+    ],
+    "categories": [
+      "development/testing",
+      "development/python"
+    ],
+    "actions": [
+      "test",
+      "measure"
+    ],
+    "tags": [
+      "load",
+      "python",
+      "distributed",
+      "performance"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "testcontainers",
+    "type": "cli",
+    "binary": "testcontainers",
+    "category": "development/testing",
+    "description": "Disposable containers for integration tests — Postgres, Redis, Kafka in tests",
+    "capabilities": [
+      "integration-test",
+      "container-test",
+      "disposable-infra"
+    ],
+    "use_when": [
+      "integration tests with real databases",
+      "test with containers",
+      "disposable test infrastructure"
+    ],
+    "do_not_use_when": [
+      "unit tests only",
+      "no Docker"
+    ],
+    "categories": [
+      "development/testing",
+      "infra/containers"
+    ],
+    "actions": [
+      "test"
+    ],
+    "tags": [
+      "integration",
+      "containers",
+      "database",
+      "disposable"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "coverage",
+    "type": "cli",
+    "binary": "coverage",
+    "category": "development/testing",
+    "description": "Python code coverage — measure test coverage, generate HTML reports",
+    "capabilities": [
+      "coverage-measure",
+      "html-report",
+      "branch-coverage"
+    ],
+    "common_commands": {
+      "run": "coverage run -m pytest",
+      "report": "coverage report",
+      "html": "coverage html"
+    },
+    "use_when": [
+      "measure test coverage",
+      "Python coverage report",
+      "find untested code"
+    ],
+    "do_not_use_when": [
+      "not Python",
+      "no tests"
+    ],
+    "categories": [
+      "development/testing",
+      "development/python"
+    ],
+    "actions": [
+      "measure",
+      "verify"
+    ],
+    "tags": [
+      "coverage",
+      "python",
+      "testing",
+      "report"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "iotop",
+    "type": "cli",
+    "binary": "iotop",
+    "category": "system/monitoring",
+    "description": "I/O monitor — see disk read/write per process in real time",
+    "capabilities": [
+      "io-monitor",
+      "disk-usage",
+      "process-io"
+    ],
+    "common_commands": {
+      "run": "sudo iotop",
+      "batch": "sudo iotop -b -n 5"
+    },
+    "use_when": [
+      "monitor disk I/O",
+      "find process using disk",
+      "diagnose slow disk"
+    ],
+    "do_not_use_when": [
+      "CPU monitoring",
+      "network monitoring"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe",
+      "measure"
+    ],
+    "tags": [
+      "io",
+      "disk",
+      "monitor",
+      "process"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "dmesg",
+    "type": "cli",
+    "binary": "dmesg",
+    "category": "system/monitoring",
+    "description": "Kernel message buffer — hardware events, driver errors, boot messages",
+    "capabilities": [
+      "kernel-log",
+      "hardware-events",
+      "driver-errors"
+    ],
+    "common_commands": {
+      "recent": "dmesg --since \"5 minutes ago\"",
+      "follow": "dmesg -w",
+      "errors": "dmesg --level=err"
+    },
+    "use_when": [
+      "check kernel logs",
+      "hardware errors",
+      "driver issues",
+      "boot messages"
+    ],
+    "do_not_use_when": [
+      "application logs",
+      "not Linux"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe"
+    ],
+    "tags": [
+      "kernel",
+      "hardware",
+      "driver",
+      "boot",
+      "linux"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "free",
+    "type": "cli",
+    "binary": "free",
+    "category": "system/monitoring",
+    "description": "Memory usage — total, used, free, shared, buffers, cache",
+    "capabilities": [
+      "memory-check",
+      "swap-check"
+    ],
+    "common_commands": {
+      "human": "free -h",
+      "watch": "watch -n 1 free -h"
+    },
+    "use_when": [
+      "check memory usage",
+      "RAM available",
+      "swap usage"
+    ],
+    "do_not_use_when": [
+      "need per-process memory"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe",
+      "measure"
+    ],
+    "tags": [
+      "memory",
+      "ram",
+      "swap",
+      "system"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "df",
+    "type": "cli",
+    "binary": "df",
+    "category": "system/monitoring",
+    "description": "Disk space usage — per filesystem, mount points, available space",
+    "capabilities": [
+      "disk-space",
+      "filesystem-check"
+    ],
+    "common_commands": {
+      "human": "df -h",
+      "type": "df -h -T"
+    },
+    "use_when": [
+      "check disk space",
+      "filesystem usage",
+      "find full disks"
+    ],
+    "do_not_use_when": [
+      "per-directory usage (use du/dust)"
+    ],
+    "categories": [
+      "system/monitoring"
+    ],
+    "actions": [
+      "observe"
+    ],
+    "tags": [
+      "disk",
+      "space",
+      "filesystem",
+      "mount"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "ip",
+    "type": "cli",
+    "binary": "ip",
+    "category": "network/general",
+    "description": "Network interface config — addresses, routes, links, tunnels",
+    "capabilities": [
+      "interface-config",
+      "routing",
+      "link-manage"
+    ],
+    "common_commands": {
+      "addr": "ip addr",
+      "route": "ip route",
+      "link": "ip link show"
+    },
+    "use_when": [
+      "check IP address",
+      "view routes",
+      "network interface config",
+      "check network"
+    ],
+    "do_not_use_when": [
+      "application networking"
+    ],
+    "categories": [
+      "network/general"
+    ],
+    "actions": [
+      "observe",
+      "transform"
+    ],
+    "tags": [
+      "network",
+      "interface",
+      "routing",
+      "ip"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "curl",
+    "type": "cli",
+    "binary": "curl",
+    "category": "network/general",
+    "description": "HTTP client — GET, POST, headers, auth, file upload/download",
+    "capabilities": [
+      "http-request",
+      "api-call",
+      "file-download",
+      "auth"
+    ],
+    "common_commands": {
+      "get": "curl https://api.example.com/data",
+      "post": "curl -X POST -H \"Content-Type: application/json\" -d '{\"key\":\"val\"}' URL",
+      "download": "curl -O https://example.com/file.tar.gz"
+    },
+    "use_when": [
+      "HTTP request",
+      "API call",
+      "download file",
+      "test endpoint",
+      "curl command"
+    ],
+    "do_not_use_when": [
+      "need browser rendering",
+      "WebSocket"
+    ],
+    "categories": [
+      "network/general",
+      "development/general"
+    ],
+    "actions": [
+      "observe",
+      "test"
+    ],
+    "tags": [
+      "http",
+      "api",
+      "download",
+      "request"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "wget",
+    "type": "cli",
+    "binary": "wget",
+    "category": "network/general",
+    "description": "File downloader — recursive download, resume, mirror sites",
+    "capabilities": [
+      "download",
+      "mirror",
+      "recursive",
+      "resume"
+    ],
+    "common_commands": {
+      "download": "wget URL",
+      "mirror": "wget -m URL",
+      "resume": "wget -c URL"
+    },
+    "use_when": [
+      "download files",
+      "mirror website",
+      "resume download",
+      "recursive download"
+    ],
+    "do_not_use_when": [
+      "API calls",
+      "need response headers"
+    ],
+    "categories": [
+      "network/general"
+    ],
+    "actions": [
+      "transform"
+    ],
+    "tags": [
+      "download",
+      "mirror",
+      "recursive",
+      "resume"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "ping",
+    "type": "cli",
+    "binary": "ping",
+    "category": "network/connectivity",
+    "description": "ICMP ping — check host reachability, measure latency",
+    "capabilities": [
+      "connectivity-check",
+      "latency-measure"
+    ],
+    "common_commands": {
+      "ping": "ping -c 4 host",
+      "flood": "sudo ping -f host"
+    },
+    "use_when": [
+      "check host reachability",
+      "measure latency",
+      "test connectivity"
+    ],
+    "do_not_use_when": [
+      "ICMP blocked",
+      "need port check"
+    ],
+    "categories": [
+      "network/connectivity"
+    ],
+    "actions": [
+      "observe",
+      "measure"
+    ],
+    "tags": [
+      "ping",
+      "latency",
+      "connectivity",
+      "icmp"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "netstat",
+    "type": "cli",
+    "binary": "netstat",
+    "category": "network/monitoring",
+    "description": "Network statistics — connections, routing tables, interface stats",
+    "capabilities": [
+      "connection-list",
+      "port-check",
+      "routing-table"
+    ],
+    "common_commands": {
+      "listen": "netstat -tlnp",
+      "all": "netstat -an"
+    },
+    "use_when": [
+      "list network connections",
+      "find listening ports",
+      "check routing table"
+    ],
+    "do_not_use_when": [
+      "prefer ss (modern replacement)"
+    ],
+    "categories": [
+      "network/monitoring"
+    ],
+    "actions": [
+      "observe"
+    ],
+    "tags": [
+      "network",
+      "connections",
+      "ports",
+      "routing"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
+    ]
+  },
+  {
+    "name": "iftop",
+    "type": "cli",
+    "binary": "iftop",
+    "category": "network/monitoring",
+    "description": "Network bandwidth monitor — per-connection throughput in real time",
+    "capabilities": [
+      "bandwidth-monitor",
+      "traffic-view",
+      "connection-monitor"
+    ],
+    "common_commands": {
+      "run": "sudo iftop -i eth0"
+    },
+    "use_when": [
+      "monitor bandwidth",
+      "see network traffic",
+      "find bandwidth hogs"
+    ],
+    "do_not_use_when": [
+      "packet inspection",
+      "need per-process info"
+    ],
+    "categories": [
+      "network/monitoring"
+    ],
+    "actions": [
+      "observe",
+      "measure"
+    ],
+    "tags": [
+      "bandwidth",
+      "traffic",
+      "monitor",
+      "network"
+    ],
+    "source": "catalog",
+    "profiles": [
+      "all"
     ]
   }
 ]
