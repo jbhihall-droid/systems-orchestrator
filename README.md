@@ -111,14 +111,14 @@ Routing priority: task type > agent role > default.
 
 ```bash
 # Install dependencies
-pip install mcp
+pip install -r requirements.txt
 
 # Register as MCP server in ~/.mcp.json
 {
   "mcpServers": {
     "systems-orchestrator-v2": {
       "command": "python3",
-      "args": ["/path/to/test/server.py"],
+      "args": ["/path/to/systems-orchestrator/server.py"],
       "env": {}
     }
   }
@@ -128,7 +128,7 @@ pip install mcp
 ## Testing
 
 ```bash
-cd /home/Ricky/test
+cd /path/to/systems-orchestrator
 python3 -m pytest tests/ -v
 ```
 
