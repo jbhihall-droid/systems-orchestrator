@@ -147,6 +147,34 @@ MCP_PACKS = {
             },
         },
     },
+    "plugins-core": {
+        "label": "Core Plugins",
+        "description": "Essential Claude Code plugins for development",
+        "servers": {},
+        "plugins": [
+            "pyright-lsp", "context7", "hookify", "security-guidance",
+            "skill-creator", "plugin-dev", "mcp-server-dev", "claude-code-setup",
+            "claude-md-management", "serena", "playwright", "commit-commands",
+        ],
+    },
+    "plugins-lsp": {
+        "label": "Language Server Plugins",
+        "description": "Semantic code intelligence for all major languages",
+        "servers": {},
+        "plugins": [
+            "pyright-lsp", "typescript-lsp", "rust-analyzer-lsp", "gopls-lsp",
+            "clangd-lsp", "jdtls-lsp", "kotlin-lsp", "ruby-lsp", "php-lsp",
+            "swift-lsp", "csharp-lsp", "lua-lsp",
+        ],
+    },
+    "plugins-review": {
+        "label": "Code Review Plugins",
+        "description": "Multi-agent code review and PR management",
+        "servers": {},
+        "plugins": [
+            "code-review", "pr-review-toolkit", "feature-dev", "greptile",
+        ],
+    },
     "comms-mcp": {
         "label": "Communication MCP Servers",
         "description": "Slack, Discord, team messaging from Claude",
