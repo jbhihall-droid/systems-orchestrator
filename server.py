@@ -162,6 +162,7 @@ summarize what you learned from the response. Specifically:
 - get_project_knowledge() → Summarize the project state for the user
 - suggest_packages() → Show package options the user can install
 - impact_analysis() → Present the assessment structure to fill in
+- execute_pipeline() → Show each stage as it runs: researcher → planner → worker → QA → manager verdict
 - install_mcp_servers() → Show which MCP servers were installed, remind to restart CC
 - get_workflows() → Show workflow steps clearly, guide user through each step
 - run_workflow() → Show which workflow is starting, current step, total steps, what to invoke
@@ -195,27 +196,30 @@ When a response contains "hint" or "_hint", follow that guidance.
 - Step done → call advance_workflow(session_id) to get next step
 - Check progress → workflow_status(session_id)
 
-== WORKFLOW PATTERNS ==
+== FULL PIPELINE (how tasks actually execute) ==
+1. User gives a prompt
+2. analyze_task() → picks best workflow + complexity level
+3. For complex tasks: start_project() → refine_goal() → lock_goal()
+4. create_project_ledger("locked goal") → stores the end goal
+5. create_task() per plan step → populates the ledger
+6. execute_pipeline(task_id) → THIS IS THE MAIN EXECUTION TOOL:
+   - Dispatches REAL subagents (researcher, planner, worker, QA, manager)
+   - Each agent runs as a separate claude process with full MCP access
+   - Reports progress at each stage: [1/6] Researcher → [2/6] Planner → etc.
+   - Manager reviews work and issues verdict: VERIFIED / REWORK / ESCALATED
+   - Rework loops up to 2x before escalation
+   - Returns structured result with all stage outputs
 
-NEW PROJECT (FULL complexity):
-1. start_project("goal") → refine_goal() → lock_goal()
-2. /brainstorming → /writing-plans
-3. create_project_ledger("locked goal")
-4. analyze_task() per plan step → create_task() per step
-5. /subagent-driven-development
-6. /verification-before-completion
-
-SIMPLE TASK (DIRECT):
-1. analyze_task("description") — follow the action_required steps
-2. Just do it. No ledger needed.
+SIMPLE TASK:
+1. analyze_task() → follow the recommended workflow
+2. run_workflow() if a workflow matches, or just do it directly
 
 BUG FIX:
-1. /systematic-debugging — diagnose root cause FIRST
-2. /test-driven-development — write failing test, then fix
+1. /systematic-debugging → /test-driven-development
 
 == TASK LIFECYCLE ==
-create_task → dispatch_worker → submit_worker_report → dispatch_qa →
-submit_qa_report → log_failure (if issues) → submit_manager_review
+create_task → execute_pipeline(task_id) → agents run automatically
+Pipeline handles: worker → QA → manager review → rework loop
 REWORK requires log_failure() first — enforced by gate.
 
 == MODEL ROUTING ==
@@ -1709,6 +1713,192 @@ def get_workflows(workflow: str = "") -> str:
     return json.dumps({
         "_summary": _summary,
         "workflows": listing,
+    }, indent=2)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PIPELINE EXECUTION — Full agent pipeline via MCP
+# ═══════════════════════════════════════════════════════════════════════════
+
+from orchestrator_loop import (
+    run_task_pipeline,
+    _step_researcher, _step_planner, _step_worker, _step_qa, _step_manager,
+    _extract_qa_score, _extract_verdict,
+)
+
+
+@mcp.tool()
+async def execute_pipeline(task_id: str, ctx: Context = None) -> str:
+    """Execute a task through the full agent pipeline with live progress.
+
+    This is the MAIN way to execute tasks. It runs the full pipeline:
+      FULL:   researcher → planner → worker → QA → manager review
+      LIGHT:  worker → QA → manager (if QA score < 0.7)
+      DIRECT: worker only
+
+    Each stage dispatches a real subagent (claude -p with MCP access),
+    waits for its output, and feeds it to the next stage.
+    The manager issues a final verdict: VERIFIED, REWORK, or ESCALATED.
+    Max 2 rework cycles before auto-escalation.
+
+    Args:
+        task_id: The task ID to execute (e.g. "ENG-001")
+    """
+    import re as _re
+
+    task_content = _get_task(str(PROJECT_DIR), task_id)
+    parsed = json.loads(task_content) if task_content.startswith("{") else None
+    if parsed and "error" in parsed:
+        return task_content
+
+    goal = _get_project_goal(str(PROJECT_DIR)) or "Complete the task"
+    playbook_dir = str(PLAYBOOK_DIR)
+
+    # Analyze complexity
+    desc_match = _re.search(r'## Description\n(.+?)(?:\n##|\Z)', task_content, _re.DOTALL)
+    description = desc_match.group(1).strip() if desc_match else task_content[:500]
+
+    model = derive_system_model(description)
+    complexity = classify_complexity(description, model["elements"], model["actions"], flows=model["flows"])
+    reasoning = classify_reasoning_level(description)
+
+    if ctx:
+        await ctx.report_progress(0, 6, f"Task {task_id}: {complexity} complexity, {reasoning} reasoning")
+
+    stages_completed = []
+    rework_count = 0
+    max_rework = 2
+
+    while rework_count <= max_rework:
+        if complexity == "FULL" and rework_count == 0:
+            # Stage 1: Research
+            if ctx:
+                await ctx.report_progress(1, 6, f"[1/6] Researcher agent investigating {task_id}...")
+            research = _step_researcher(str(PROJECT_DIR), playbook_dir, task_id, task_content, goal)
+            stages_completed.append({"stage": "researcher", "output_length": len(research),
+                                      "summary": research[:200] + "..." if len(research) > 200 else research})
+            if ctx:
+                await ctx.report_progress(1, 6, f"✓ Research complete ({len(research)} chars)")
+
+            # Stage 2: Planner
+            if ctx:
+                await ctx.report_progress(2, 6, f"[2/6] Planner agent creating execution plan...")
+            enriched = task_content + "\n\n## Research\n" + research
+            plan = _step_planner(str(PROJECT_DIR), playbook_dir, task_id, enriched, goal)
+            stages_completed.append({"stage": "planner", "output_length": len(plan),
+                                      "summary": plan[:200] + "..." if len(plan) > 200 else plan})
+            if ctx:
+                await ctx.report_progress(2, 6, f"✓ Plan created ({len(plan)} chars)")
+
+            enriched = enriched + "\n\n## Plan\n" + plan
+        elif complexity == "FULL":
+            enriched = task_content  # rework — skip research/plan
+        else:
+            enriched = task_content
+
+        # Stage 3: Worker execution
+        stage_num = 3 if complexity == "FULL" else 1
+        total_stages = 6 if complexity == "FULL" else (3 if complexity == "LIGHT" else 1)
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"[{stage_num}/{total_stages}] Worker agent executing task...")
+        worker_result = _step_worker(str(PROJECT_DIR), playbook_dir, task_id, enriched, reasoning)
+        stages_completed.append({"stage": "worker", "output_length": len(worker_result),
+                                  "summary": worker_result[:200] + "..." if len(worker_result) > 200 else worker_result})
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"✓ Worker complete ({len(worker_result)} chars)")
+
+        if complexity == "DIRECT":
+            # Direct tasks skip QA and manager
+            return json.dumps({
+                "_summary": f"Task {task_id} executed (DIRECT). Worker output: {len(worker_result)} chars. Auto-VERIFIED.",
+                "task_id": task_id,
+                "complexity": complexity,
+                "verdict": "VERIFIED",
+                "stages": stages_completed,
+            }, indent=2)
+
+        # Stage 4: QA verification
+        stage_num = 4 if complexity == "FULL" else 2
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"[{stage_num}/{total_stages}] QA agent verifying work...")
+        qa_result, qa_score = _step_qa(str(PROJECT_DIR), playbook_dir, task_id, enriched, worker_result, reasoning)
+        stages_completed.append({"stage": "qa", "score": qa_score, "output_length": len(qa_result),
+                                  "summary": qa_result[:200] + "..." if len(qa_result) > 200 else qa_result})
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"✓ QA complete (score: {qa_score:.1f})")
+
+        # LIGHT complexity: auto-verify if QA passes
+        if complexity == "LIGHT" and qa_score >= 0.7:
+            from lib.ledger import submit_manager_review as _smr
+            _smr(str(PROJECT_DIR), task_id, "VERIFIED", "QA passed", None)
+            return json.dumps({
+                "_summary": f"Task {task_id} VERIFIED (LIGHT). QA score: {qa_score:.1f}. All stages complete.",
+                "task_id": task_id,
+                "complexity": complexity,
+                "verdict": "VERIFIED",
+                "qa_score": qa_score,
+                "stages": stages_completed,
+            }, indent=2)
+
+        # Stage 5: Manager review
+        stage_num = 5 if complexity == "FULL" else 3
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"[{stage_num}/{total_stages}] Manager reviewing worker + QA results...")
+        verdict = _step_manager(str(PROJECT_DIR), task_id, enriched, worker_result, qa_result, rework_count, goal)
+        stages_completed.append({"stage": "manager", "verdict": verdict})
+        if ctx:
+            await ctx.report_progress(stage_num, total_stages,
+                f"✓ Manager verdict: {verdict}")
+
+        if verdict == "VERIFIED":
+            return json.dumps({
+                "_summary": (
+                    f"Task {task_id} VERIFIED ({complexity}). "
+                    f"Pipeline: {' → '.join(s['stage'] for s in stages_completed)}. "
+                    f"QA score: {qa_score:.1f}. All stages passed."
+                ),
+                "task_id": task_id,
+                "complexity": complexity,
+                "verdict": "VERIFIED",
+                "qa_score": qa_score,
+                "rework_count": rework_count,
+                "stages": stages_completed,
+            }, indent=2)
+        elif verdict == "ESCALATED":
+            return json.dumps({
+                "_summary": f"Task {task_id} ESCALATED. Needs human intervention. Review the stages below.",
+                "task_id": task_id,
+                "verdict": "ESCALATED",
+                "rework_count": rework_count,
+                "stages": stages_completed,
+            }, indent=2)
+        elif verdict == "REWORK":
+            rework_count += 1
+            if ctx:
+                await ctx.report_progress(stage_num, total_stages,
+                    f"⟲ REWORK #{rework_count}/{max_rework} — re-executing worker...")
+            if rework_count > max_rework:
+                from lib.ledger import submit_manager_review as _smr
+                _smr(str(PROJECT_DIR), task_id, "ESCALATED", f"Max rework ({max_rework}) exceeded", None)
+                return json.dumps({
+                    "_summary": f"Task {task_id} ESCALATED after {max_rework} rework attempts.",
+                    "task_id": task_id,
+                    "verdict": "ESCALATED",
+                    "rework_count": rework_count,
+                    "stages": stages_completed,
+                }, indent=2)
+            task_content = _get_task(str(PROJECT_DIR), task_id)
+
+    return json.dumps({
+        "_summary": f"Task {task_id} ESCALATED (max rework exceeded).",
+        "task_id": task_id,
+        "verdict": "ESCALATED",
+        "stages": stages_completed,
     }, indent=2)
 
 
