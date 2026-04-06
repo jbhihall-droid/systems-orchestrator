@@ -400,11 +400,13 @@ Issue a verdict:
 def execute_dispatch(
     dispatch_packet: dict[str, Any],
     working_dir: str = ".",
-    timeout: int = 300,
+    timeout: int | None = None,
 ) -> dict[str, Any]:
     """Execute a dispatch packet by sending it to the appropriate model CLI.
     Returns the model's response.
     """
+    if timeout is None:
+        timeout = _DISPATCH_CONFIG.get("timeout_seconds", 300)
     model_cli = dispatch_packet["model_cli"]
     prompt = dispatch_packet["prompt"]
     level = dispatch_packet.get("reasoning_level", "sonnet")
@@ -488,7 +490,8 @@ def dispatch_parallel(
     import concurrent.futures
 
     results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(packets), 4)) as pool:
+    max_parallel = _DISPATCH_CONFIG.get("max_parallel", 4)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(packets), max_parallel)) as pool:
         futures = {
             pool.submit(execute_dispatch, packet, working_dir, timeout): i
             for i, packet in enumerate(packets)

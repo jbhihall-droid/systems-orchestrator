@@ -678,5 +678,11 @@ def _update_dep_graph(project_dir: str, task_id: str, blocked_by: list[str], blo
     if lines:
         content = graph_path.read_text()
         insert = "\n".join(lines) + "\n"
-        content = content.replace("(empty)\n```", f"{insert}```")
+        # Remove (empty) placeholder if present
+        content = content.replace("(empty)\n", "")
+        # Insert new edges before the closing ``` of the mermaid block
+        # Find the last ``` and insert before it
+        last_fence = content.rfind("```")
+        if last_fence > 0:
+            content = content[:last_fence] + insert + content[last_fence:]
         graph_path.write_text(content)

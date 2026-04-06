@@ -147,7 +147,7 @@ class GoalAssessment:
             "clarity_score": round(self.score, 2),
             "category": self.category,
             "issues": self.issues,
-            "ready": self.score >= 0.7,
+            "ready": self.is_ready(),
         }
 
 
@@ -215,6 +215,10 @@ class OnboardingFlow:
             enriched += f" [Success criteria: {self.answers['success']}]"
         if self.answers.get("constraints"):
             enriched += f" [Constraints: {self.answers['constraints']}]"
+        if self.answers.get("dependencies"):
+            enriched += f" [Dependencies: {self.answers['dependencies']}]"
+        if self.answers.get("audience"):
+            enriched += f" [Audience: {self.answers['audience']}]"
 
         self.refined_goal = enriched
 

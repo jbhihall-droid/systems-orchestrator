@@ -91,9 +91,10 @@ def _step_worker(project_dir: str, playbook_dir: str, task_id: str, task_content
 def _step_qa(project_dir: str, playbook_dir: str, task_id: str, task_content: str,
              worker_report: str, reasoning_level: str) -> tuple[str, float]:
     """QA: verify the work at a stepped-down reasoning level."""
+    # Pass the WORKER's level — craft_qa_prompt handles the step-down internally
     qa_level = QA_LEVEL_DOWN.get(reasoning_level, reasoning_level)
     print(f"  [qa] Verifying {task_id} at {qa_level} (stepped from {reasoning_level})...")
-    packet = craft_qa_prompt(task_id, task_content, worker_report, playbook_dir, qa_level)
+    packet = craft_qa_prompt(task_id, task_content, worker_report, playbook_dir, reasoning_level)
     result = execute_dispatch(packet)
     output = result.get("output", "") if isinstance(result, dict) else str(result)
     print(f"  [qa] Done ({len(output)} chars)")

@@ -1514,15 +1514,23 @@ async def install_tools(tools: list[str], ctx: Context = None) -> str:
             "error": "No package manager found (need pacman, apt, or brew)",
         }, indent=2)
 
+    MAX_INSTALL = 30
     results = []
     installed_count = 0
     failed_count = 0
-    total = min(len(tools), 30)
+    skipped = []
+    if len(tools) > MAX_INSTALL:
+        skipped = tools[MAX_INSTALL:]
+        tools = tools[:MAX_INSTALL]
+    total = len(tools)
 
     if ctx:
-        await ctx.report_progress(0, total, f"Starting installation of {total} tools via {pm}...")
+        msg = f"Starting installation of {total} tools via {pm}..."
+        if skipped:
+            msg += f" ({len(skipped)} skipped due to batch limit: {', '.join(skipped)})"
+        await ctx.report_progress(0, total, msg)
 
-    for i, tool in enumerate(tools[:30]):  # cap at 30 to avoid runaway
+    for i, tool in enumerate(tools):
         cmd = get_install_cmd(tool, pm)
         if not cmd:
             results.append({"tool": tool, "status": "no_recipe", "message": f"No install recipe for {pm}"})
@@ -1559,14 +1567,16 @@ async def install_tools(tools: list[str], ctx: Context = None) -> str:
                 await ctx.report_progress(i + 1, total, f"✗ {tool} error: {e}")
 
     _summary = (
-        f"Installed {installed_count}/{len(tools)} tools"
+        f"Installed {installed_count}/{total} tools"
         + (f", {failed_count} failed" if failed_count else "")
         + f" using {pm}."
+        + (f" {len(skipped)} skipped (batch limit {MAX_INSTALL}): {', '.join(skipped)}" if skipped else "")
     )
 
     return json.dumps({
         "_summary": _summary,
         "results": results,
+        "skipped": skipped,
         "installed": installed_count,
         "failed": failed_count,
     }, indent=2)
@@ -1738,7 +1748,8 @@ async def run_workflow(workflow: str, task: str = "", ctx: Context = None) -> st
 
     wf = WORKFLOW_TEMPLATES[workflow]
     total = len(wf["steps"])
-    session_id = f"wf_{workflow}_{id(wf)}"
+    import uuid
+    session_id = f"wf_{workflow}_{uuid.uuid4().hex[:8]}"
 
     _ACTIVE_WORKFLOWS[session_id] = {
         "workflow": workflow,
@@ -1806,6 +1817,13 @@ async def advance_workflow(session_id: str, step_result: str = "", ctx: Context 
         return json.dumps({
             "_summary": "No active workflow with that session ID. Call run_workflow() to start one.",
             "error": "Invalid session_id",
+        }, indent=2)
+
+    if state["status"] == "completed":
+        return json.dumps({
+            "_summary": "This workflow is already complete. Start a new one with run_workflow().",
+            "status": "completed",
+            "completed_steps": state["completed_steps"],
         }, indent=2)
 
     wf = WORKFLOW_TEMPLATES[state["workflow"]]
