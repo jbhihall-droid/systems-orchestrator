@@ -71,7 +71,7 @@ python3 orchestrator_loop.py --project-dir ./my-project --poll 15
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| Executor | Codex/o4-mini | Creates and modifies files, runs commands |
+| Executor | Codex/gpt-5.4 | Creates and modifies files, runs commands |
 | Verifier | Claude/sonnet | QA gate, scores 0.0-1.0, never modifies code |
 | Researcher | Claude/sonnet | Reads, searches, investigates, produces findings |
 | Planner | Claude/opus | Creates step-by-step execution plans |
@@ -90,7 +90,7 @@ Two subscription CLIs, zero API keys:
 | CLI | Flag | Strengths |
 |-----|------|-----------|
 | Claude CLI (`claude -p`) | `--model opus/sonnet/haiku` | Reasoning, planning, QA, review, security |
-| Codex CLI (`codex exec`) | `-m o4-mini/o3/gpt-4.1` | Code generation, execution, refactoring, tests |
+| Codex CLI (`codex exec`) | `-m gpt-5.4/o4-mini/o3/gpt-4.1` | Code generation, execution, refactoring, tests |
 
 Routing priority: task type > agent role > default.
 

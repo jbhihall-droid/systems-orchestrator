@@ -171,7 +171,7 @@ REWORK requires log_failure() first — enforced by gate.
 Never skip a step. Never start implementation before the plan exists.
 
 == MODEL ROUTING ==
-Code generation, refactoring, tests → Codex (dispatch routes executor to codex/o4-mini)
+Code generation, refactoring, tests → Codex (dispatch routes executor to codex/gpt-5.4)
 Reasoning, planning, QA, review → Claude (dispatch routes planner/verifier/reviewer to claude)
 
 == CREATING NEW SKILLS/AGENTS ==
